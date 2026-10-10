@@ -1,10 +1,8 @@
-name: Build Jin8 lightweight gate PRX
+name: ARCHIVED - Jin8 Lite Auto cheat gate (not standalone)
 
+# Superseded by build-jin8-standalone.yml. This experiment required Cheats
+# enabled and therefore violates the user's fully standalone requirement.
 on:
-  push:
-    paths:
-      - 'plugin-lite/**'
-      - '.github/workflows/build-jin8-lite.yml'
   workflow_dispatch:
 
 permissions:
