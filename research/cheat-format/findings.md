@@ -62,3 +62,7 @@ _L 0xE01D039B 0x00408348
 ## Local source audit
 
 Do **not** commit the source cheat. You can run `python tools/cheat_inventory.py "C:\\path\\to\\ULUS10466.ini"` on your own licensed/user-supplied source file to regenerate counts and its hash. The tool only outputs descriptive metadata.
+
+## Follow-up: user-observed zoom/slow motion
+
+The runtime `(1)jin` block has explicit camera and slow-motion sections, and three writes to `0x1015350C`. See [Investigation 002](investigation-002-effects.md). The source bundle is not a verified complete mod distribution; do not assert all Tekken 8 moves are installed.

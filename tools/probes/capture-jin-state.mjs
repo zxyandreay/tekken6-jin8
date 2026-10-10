@@ -16,6 +16,13 @@ const CANDIDATES = [
   [0x08C07D3C, 'input_button_candidate'],
   [0x0895350C, 'shared_camera_word'],
 ];
+const EFFECT_WORDS = [
+  [0x08C52890, 'game_speed_control_candidate'],
+  [0x08D6F270, 'camera_speed_control_candidate'],
+  [0x08D6F224, 'camera_zoom_control_candidate'],
+  [0x08C07CA0, 'slowmo_timer_state_candidate'],
+];
+
 const ULTRAWIDE_WORDS = [
   0x08945F10, 0x08945F14, 0x08946794, 0x08946798,
   0x08946BC8, 0x08946BCC, 0x08947D90, 0x08947D94,
@@ -91,6 +98,7 @@ async function main() {
       candidateWords: {},
       ultrawideInstructionWords: {},
       payloadSamples: {},
+      effectWords: {},
     };
     try {
       const result = await client.request('hle.module.list');
@@ -99,6 +107,7 @@ async function main() {
 
     for (const [addr, name] of CANDIDATES) data.candidateWords[name] = await captureWord(client, addr);
     for (const addr of ULTRAWIDE_WORDS) data.ultrawideInstructionWords[hex(addr)] = await captureWord(client, addr, true);
+    for (const [addr, name] of EFFECT_WORDS) data.effectWords[name] = await captureWord(client, addr);
     for (const [addr, name] of PAYLOAD_SAMPLES) data.payloadSamples[name] = await captureBytes(client, addr);
 
     if (inspectPointers) {

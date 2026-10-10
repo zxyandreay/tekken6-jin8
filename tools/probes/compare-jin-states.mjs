@@ -9,7 +9,7 @@ export function diffSnapshots(a, b) {
   if (a.schema !== 'jin8-snapshot-v1' || b.schema !== 'jin8-snapshot-v1') {
     throw new Error('Unrecognized snapshot schema. Expected jin8-snapshot-v1.');
   }
-  const sections = ['candidateWords', 'ultrawideInstructionWords', 'payloadSamples', 'pointerWindows'];
+  const sections = ['candidateWords', 'ultrawideInstructionWords', 'payloadSamples', 'pointerWindows', 'effectWords'];
   const differences = [];
   for (const section of sections) {
     const first = a[section] ?? {};

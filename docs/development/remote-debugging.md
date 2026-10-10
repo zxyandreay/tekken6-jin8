@@ -63,3 +63,18 @@ node tools/probes/compare-jin-states.mjs captures/stock-jin-battle-deep.json cap
 The debugger endpoint is from the user's previous captures; adjust if it changes. These commands do not enable cheats or pause the CPU. When possible, pause manually in PPSSPP's debugger **after** entering the target fight before capturing; the returned CPU status will record whether it was paused. Move pointers may change between requests while running.
 
 Inspect the JSON under ignored `captures/` before sharing. The differences are descriptive and do not automatically identify pointer ownership, correct structure layout, or successful master activation.
+
+## Camera/slowmo diagnostic — Investigation 002
+
+The repacked `(1)jin` source itself includes camera zoom and SlowMo sections; unusual camera effects need not come from the ultrawide PRX. The remote debugger now records four **read-only candidate effect-control words**, as well as the shared camera instruction:
+
+| PSP address | Originating source-cheat operand | Working hypothesis |
+| --- | --- | --- |
+| `0x08C52890` | `0x20452890` | Game-speed controller candidate |
+| `0x08D6F270` | `0x2056F270` | Camera-speed controller candidate |
+| `0x08D6F224` | `0x2056F224` | Camera zoom controller candidate |
+| `0x08C07CA0` | `0x20407CA0` | SlowMo timer/state candidate |
+
+These interpretations are **inferred from source labels and published notes**, not yet tested in the user's game. They are passive reads, not freeze/write cheats. Capture unchanged camera settings in stable fights vs mid-effect if the game is playable. If PPSSPP becomes unstable, stop testing and cold boot without the cheats rather than trying to restore RAM by unchecking the box.
+
+The original ZIP was not a verified complete distribution. See [Investigation 002](../../research/cheat-format/investigation-002-effects.md). For clean isolation, disable the ultrawide plugin **only if you can still satisfy the source payload's memory requirement**; otherwise run a labeled combined-mod diagnostic with optional camera CWCheats disabled.

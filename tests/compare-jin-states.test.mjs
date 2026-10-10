@@ -21,3 +21,11 @@ test('detects pointer-window changes without contacting PPSSPP', () => {
   assert.equal(diff.length, 1);
   assert.equal(diff[0].section, 'pointerWindows');
 });
+
+test('includes read-only effect state differences', () => {
+  const a = { schema: 'jin8-snapshot-v1', effectWords: { speed: { value: '0x00000001' } } };
+  const b = { schema: 'jin8-snapshot-v1', effectWords: { speed: { value: '0x00000003' } } };
+  const diff = diffSnapshots(a, b);
+  assert.equal(diff.length, 1);
+  assert.equal(diff[0].section, 'effectWords');
+});
