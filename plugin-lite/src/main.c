@@ -38,6 +38,8 @@ static int gate_thread(SceSize args, void *argp) {
     int armed = 0, missing = 0, install_wait = 0;
     uint32_t previous_base = 0;
     (void)args; (void)argp;
+    /* Clear stale gate state from a previous fight or session. */
+    store(GATE, 0u);
     while (running) {
         int valid = ready();
         uint32_t base = valid ? word(MOVESET) : 0u;
