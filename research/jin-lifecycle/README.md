@@ -55,3 +55,13 @@ The first `stock-menu` and `stock-jin-battle` captures are analyzed in [Experime
 Follow [remote debugging instructions](../../docs/development/remote-debugging.md#deep-pointer-window-follow-up). Re-capture stock and successfully modded Jin in the same match phase using `--inspect-pointers`, then compare. This is passive; the source mod must still be activated manually for the mod-side baseline.
 
 **Control caveat:** Both first captures contain a camera word matching the ultrawide optional `Camera - Wider` setting. Repeat with camera cheats disabled if a completely stock camera control is needed; otherwise keep camera conditions identical across A/B and record the setting.
+
+## Experiment 002 checkpoint
+
+[Deep capture findings](experiment-002-results.md): the master starts and late source-write signatures **both match live memory**; however, the stock and mod configurations differed (ultrawide absent vs present), and CPUs were not paused. Run matched captures and the new read-only signature probe rather than concluding all writes completed.
+
+```powershell
+node tools/probes/verify-master-payload.mjs --endpoint 192.168.0.101:39100 --label master-stock-matched
+# after cold boot and deliberate manual activation in a stable Jin fight:
+node tools/probes/verify-master-payload.mjs --endpoint 192.168.0.101:39100 --label master-mod-matched
+```

@@ -58,3 +58,7 @@ Research is currently scoped to `ULUS10466` and PPSSPP. Addresses and behavior m
 ## Related project
 
 - [Tekken 6 Ultrawide](https://github.com/zxyandreay/tekken6-ultrawide) — independent automatic aspect and gameplay HUD correction, with its own validated v1.2.1 release.
+
+## October 10 — master initialization evidence
+
+[Experiment 002 deep-capture report](research/jin-lifecycle/experiment-002-results.md) confirms direct-write signatures near the beginning and far end of the original master are present when modded Jin is active. The first deep stock/mod captures differed in ultrawide plugin loading, so they are not a controlled A/B. Next use the safe [11-signature probe](tools/probes/verify-master-payload.mjs) with a matched game/plugin configuration, and keep both output JSON files locally in ignored `captures/`.

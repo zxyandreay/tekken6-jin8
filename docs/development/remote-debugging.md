@@ -78,3 +78,16 @@ The repacked `(1)jin` source itself includes camera zoom and SlowMo sections; un
 These interpretations are **inferred from source labels and published notes**, not yet tested in the user's game. They are passive reads, not freeze/write cheats. Capture unchanged camera settings in stable fights vs mid-effect if the game is playable. If PPSSPP becomes unstable, stop testing and cold boot without the cheats rather than trying to restore RAM by unchecking the box.
 
 The original ZIP was not a verified complete distribution. See [Investigation 002](../../research/cheat-format/investigation-002-effects.md). For clean isolation, disable the ultrawide plugin **only if you can still satisfy the source payload's memory requirement**; otherwise run a labeled combined-mod diagnostic with optional camera CWCheats disabled.
+
+## Experiment 002: sampled master signatures
+
+After first/late source writes both matched user captures, `verify-master-payload.mjs` was added to test **11 distributed known 32-bit direct writes** from the exact source master (no user-supplied cheat file needed on the probe computer). Run with cheats OFF and then in a separate successfully initialized Jin fight with the master toggled OFF and Jin runtime ON; keep the **same ultrawide/expanded-memory setting** for both phases:
+
+```powershell
+node tools/probes/verify-master-payload.mjs --endpoint 192.168.0.101:39100 --label master-stock-matched
+node tools/probes/verify-master-payload.mjs --endpoint 192.168.0.101:39100 --label master-mod-matched
+```
+
+Also take a new `--inspect-pointers` stock capture **with ultrawide already enabled**, because the first deep comparison had ultrawide **OFF only in stock**. Disabled camera cheats are preferred in both sessions. Use a fresh cold boot for each phase; while the mod master is executing, avoid other memory probes until initialization is complete. The signature probe only reads 11 words and writes JSON locally into ignored `captures/`. It does not activate cheats, install hooks or change emulator state.
+
+Results with 11/11 matching signatures would support broad payload presence but **cannot prove all 511,607 master records were installed or runtime conditions work**. See [Experiment 002 report](../../research/jin-lifecycle/experiment-002-results.md).

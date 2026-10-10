@@ -10,3 +10,5 @@ The experimental evidence trail for the Jin8 project.
 When a hypothesis is demonstrated, update the canonical file in `docs/` and preserve its proof here. Archive rejected experiments rather than erasing them.
 
 - [Experiment 001: stock captures](jin-lifecycle/experiment-001-results.md) — confirmed baseline observations, not a mod test.
+
+- [Experiment 002: deep stock vs mod results](jin-lifecycle/experiment-002-results.md) — first and late master signatures match; plugin confound pending.

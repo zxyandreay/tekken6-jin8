@@ -47,3 +47,9 @@ Known instruction pairs in stock EBOOT, all observed as `LUI 0x3C013FE3` then `O
 ## Baseline caveat — camera preset and high memory
 
 The October 10 stock-labeled captures show camera word `0x3C013F82`, matching the low halfword of ultrawide's optional **Camera - Wider** preset (`0x3F82`). Consequently, do not call these captures fully camera-cheat-free. The high target `0x0A1F0AB0` is roughly 33.94 MiB above `0x08000000`, beyond 32 MiB, and was invalid in both observed states. Confirm expanded-memory setting during mod tests.
+
+## Verified CWCheat address mapping and late master record
+
+The source's 32-bit direct-write opcode `_L 0x219F0AB0 0x00DF7C0E` corresponds to guest **`0x0A1F0AB0`**, because CWCheat address offsets are based on `0x08800000` (not `0x08000000`). This was confirmed in the user's October 10 mod snapshot as little-endian `0e7cdf00`, and matches the highest direct target discovered in the 511,607-record master. The default RAM window ends before this address; expanded-memory dependency is a real issue for complete payload loading. See [Experiment 002](../../research/jin-lifecycle/experiment-002-results.md).
+
+The first 256 bytes at `0x08754400` were unchanged between stock and mod snapshots; that alone is **not** proof the active move table is unmodified.

@@ -8,3 +8,5 @@
 Node.js 22+ is recommended. No npm install or PPSSPP binary modification is required.
 
 - Add `--inspect-pointers` to `capture-jin-state.mjs` to read at most 384 bytes from the two validated guest pointer candidates (no memory writes, no recursive pointer chase).
+
+- `probes/verify-master-payload.mjs` — bounded read-only 11-anchor checksum probe across the user's original master (no mod data embedded). Use the same plugin/memory configuration for stock vs active-mod comparisons.
