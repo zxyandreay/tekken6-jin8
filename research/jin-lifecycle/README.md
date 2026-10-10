@@ -139,3 +139,7 @@ User observed partially working Jin8 animations but repeated stutters under v0.3
 ## Incident 015 — v2 uppercut state flatline and next CPU snapshot
 
 [Trace-derived diagnosis](incident-015-uppercut-v2-flatline-cpu-stall.md): uppercut move 0x02AB freezes all 1,344 P1 state bytes in 150 samples, starves emulated CPU ticks ~119×, with repeated frame-stat timeouts. The EBOOT contains a backward branch at PC hint 0x088C6160; paused GPR/backtrace evidence is required for attribution. CPU-pausing Windows snapshot utility privately delivered; no PRX changed.
+
+## Incident 016 — multiple affected moves; all-move CPU auto probe
+
+[Explanation and revised test](incident-016-multiple-moves-allmove-cpu-probe.md): previous v1 CPU snapshot was taken while Jin idle, so no valid paused CPU capture. User confirms freezes affect other modified moves. A separate auto-armed all-move snapshot tool was locally tested, with multiple safeguards against false positive pauses; private downloadable ZIP provided. Await captured paused PCs and registers for different failing move IDs before any new gameplay fix.

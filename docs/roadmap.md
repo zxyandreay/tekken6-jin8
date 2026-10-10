@@ -128,3 +128,7 @@ Verified real-device trace: last Jin move transition to `0x02AB` at t=7.561s; re
 ## Incident 015 — uppercut state flatline / CPU stall, next precise loop debug
 
 Second Android remote trace proves 150 byte-identical full P1 state samples after move 0x02AB begins, ~119× reduction in emulated CPU ticks/sec, repeated GPU-stat timeouts. JIT PC hints 0x088C6160; decrypted stock EBOOT has a backwards MIPS bne at this address. Cannot infer exact loop cause from running JIT PC. New CPU snapshot utility pauses/resumes emulation to record stopped registers/backtrace/disassembly (simulated protocol tests pass, real Android untested). Await paused CPU capture before deciding move-specific PRX change. [Details](../research/jin-lifecycle/incident-015-uppercut-v2-flatline-cpu-stall.md).
+
+## Incident 016 — generalize CPU captures across affected moves
+
+User reports modified Jin moves other than uppercut also freeze. Previous failed CPU snapshot merely observed idle 0x8001 because the user had not triggered the freeze. New standalone Windows diagnostic archive arms **before** fight, monitors any non-idle move and confirms both 1344-byte state flatline and >=2 CPU tick collapses (12% of normal) before taking paused CPU registers/threads/backtrace; no memory writes. Local simulator tests + the user's earlier v2 uppercut trace replay pass; awaiting Android captures of one or more different failing moves for a shared-root-cause diagnosis. [Incident 016](../research/jin-lifecycle/incident-016-multiple-moves-allmove-cpu-probe.md).
