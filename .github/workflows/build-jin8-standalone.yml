@@ -17,8 +17,6 @@ jobs:
       - name: Compile standalone PRX
         run: |
           make -C plugin-standalone
-          gcc -std=c11 -Wall -Wextra -Werror -I plugin-standalone/src tests/battle_clock_test.c -o /tmp/jin8-clock-test
-          /tmp/jin8-clock-test
           test -s plugin-standalone/Tekken6Jin8.prx
           test "$(od -An -tu2 -j 44 -N 2 plugin-standalone/Tekken6Jin8.prx | tr -d '[:space:]')" = "1"
           memsz="$(od -An -tu4 -j 72 -N 4 plugin-standalone/Tekken6Jin8.prx | tr -d '[:space:]')"
@@ -35,3 +33,12 @@ jobs:
           name: Tekken6Jin8-Standalone-v0.4-PRX
           path: dist/
           if-no-files-found: error
+
+  battle-clock-host-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test battle-ready gate with host GCC
+        run: |
+          gcc -std=c11 -Wall -Wextra -Werror -I plugin-standalone/src tests/battle_clock_test.c -o /tmp/jin8-clock-test
+          /tmp/jin8-clock-test
