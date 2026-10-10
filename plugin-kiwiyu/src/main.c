@@ -117,7 +117,7 @@ static int protect_loaded_modules(void) {
             note("module query unavailable: fail closed"); return 0;
         }
         if (strcmp(info.name, "tekken") == 0) continue;
-        if (strcmp(info.name, "Tekken6Jin8") == 0) self = 1;
+        if (strcmp(info.name, "Tekken6JinKiwiYu") == 0) self = 1;
         if (info.nsegment < 0 || info.nsegment > 4) return 0;
         for (int k = 0; k < info.nsegment; ++k) {
             uint32_t addr = (uint32_t)info.segmentaddr[k];
@@ -629,7 +629,7 @@ static int loader_thread(SceSize args, void *argp) {
         sceKernelDelayThread(16000);
     }
 done:
-    note("Jin8 loader stopped");
+    note("KiwiYu loader stopped");
     if (cached_runtime) { free(cached_runtime); cached_runtime = NULL; cached_runtime_ready = 0; }
     if (log_fd >= 0) sceIoClose(log_fd);
     active_thread = 0;
