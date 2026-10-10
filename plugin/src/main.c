@@ -127,7 +127,7 @@ static int execute(Stream *s) {
     int changes_code = 0;
     while (running && next(s, &x)) {
         uint32_t type = x.a >> 28, a = cwaddr(x.a), b = x.b;
-        uint32_t n, addr, val, increment;
+        uint32_t n, addr, val;
         switch (type) {
         case 0: {
             int size = (b & 0xFFFF0000u) ? 4 : ((b & 0xFF00u) ? 2 : 1);
