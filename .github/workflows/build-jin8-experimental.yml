@@ -1,0 +1,35 @@
+name: Build experimental Jin8 PRX
+
+on:
+  push:
+    paths:
+      - 'plugin/**'
+      - 'tools/build_jin8_resource.py'
+      - '.github/workflows/build-jin8-experimental.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: pspdev/pspdev:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build separate PRX using PSPSDK
+        run: |
+          make -C plugin
+          test -s plugin/Tekken6Jin8.prx
+      - name: Stage plugin shell (data is generated locally)
+        run: |
+          mkdir -p dist/PSP/PLUGINS/Tekken6Jin8
+          cp plugin/Tekken6Jin8.prx dist/PSP/PLUGINS/Tekken6Jin8/
+          cp plugin/config/plugin.ini dist/PSP/PLUGINS/Tekken6Jin8/
+          cp plugin/INSTALL.md dist/INSTALL-READ-ME.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Tekken6Jin8-Experimental-PRX
+          path: dist/
+          if-no-files-found: error

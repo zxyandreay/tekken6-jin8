@@ -1,0 +1,6 @@
+TARGET = Tekken6Jin8
+OBJS = src/main.o exports.o
+CFLAGS = -O2 -G0 -std=c11 -Wall -Wextra -Werror
+ASFLAGS = $(CFLAGS)
+PSPSDK := $(shell psp-config --pspsdk-path)
+include $(PSPSDK)/lib/build_prx.mak
