@@ -14,3 +14,13 @@ __pycache__/
 .pytest_cache/
 node_modules/
 .DS_Store
+
+# Generated PRX, user-owned converted source data, temporary builds
+build/
+plugin/*.prx
+plugin/*.elf
+plugin/*.o
+plugin/src/*.o
+plugin/exports.c
+plugin/exports.o
+*.j8c

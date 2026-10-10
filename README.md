@@ -1,14 +1,25 @@
 # Tekken 6 Jin8
 
-**Research-stage project** to automate a **Tekken 8-inspired Jin Kazama moveset and Rage Art** in **Tekken 6 USA (`ULUS10466`) on PPSSPP**.
+**Status: compiled experimental automatic PRX — real-device PPSSPP verification pending.** This repository contains a standalone PSP plugin to reproduce the user's existing Tekken 8-inspired Jin Kazama cheat **without manually toggling CWCheats**. It targets Tekken 6 USA (\`ULUS10466\`) on PPSSPP.
 
-> **Status: ACTIVE RESEARCH.** No working automatic moveset plugin is released or demonstrated yet. This repository currently holds the evidence, research plan, compatibility contract, and read-only PPSSPP debugger probes needed to build one.
+## Install the independent Jin8 plugin
 
-## Goal
+1. Download the **Tekken6Jin8-Experimental-PRX** artifact from the [build workflow](https://github.com/zxyandreay/tekken6-jin8/actions/workflows/build-jin8-experimental.yml). That public artifact contains the compiled PRX and plugin.ini, **not** copyrighted third-party cheat data.
+2. Copy the artifact's \`PSP/PLUGINS/Tekken6Jin8/\` folder to your PPSSPP Memory Stick directory.
+3. Convert your local, original \`ULUS10466 (3).ini\` into the required separate resources:
 
-Selecting Jin should be enough. Users should not have to enter a match, open the Cheats menu, rapidly enable a huge master code, and disable it again. The eventual implementation should load custom moveset data at a verified point in the match lifecycle, maintain the necessary runtime behavior, and restore or invalidate it safely as game state changes.
+\`\`\`powershell
+python tools/build_jin8_resource.py "C:\path\to\ULUS10466 (3).ini"
+\`\`\`
 
-The first milestone is **reproducible observations**, not a speculative PRX.
+4. Copy \`build/resource/master.j8c\` and \`build/resource/runtime.j8c\` next to \`Tekken6Jin8.prx\` and \`plugin.ini\`. Verify all four files are under \`PSP/PLUGINS/Tekken6Jin8/\`.
+5. **Disable both (m)Tekken 8 and (1)jin CWCheats.** Do not run two cheat engines against the same game RAM.
+6. Enable Jin8 in PPSSPP's Plugin Manager, fully restart PPSSPP, and select Jin as P1. Examine \`PSP/PLUGINS/Tekken6Jin8/Jin8.log\` for errors.
+7. Keep the **official Tekken6Ultrawide** PRX installed independently and unchanged if you want ultrawide. The Jin8 manifest itself requests \`memory = 80\`, without requiring any modification to ultrawide.
+
+The initial PRX reproduces existing cheat semantics (including cinematic SlowMo/camera effects). It is **not yet verified in live PPSSPP**, and does not promise a complete Tekken 8 moveset or Rage Art.
+
+[Detailed install and testing notes](plugin/INSTALL.md) · [Plugin source](plugin/src/main.c) · [Build workflow](.github/workflows/build-jin8-experimental.yml) · [Experimental research](research/README.md)
 
 ## Getting started: remote debugging
 

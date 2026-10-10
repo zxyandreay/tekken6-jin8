@@ -54,3 +54,7 @@ This is a **design target**, not a demonstrated plugin. A short-term cheat inter
 ## Deliberately out of scope (first version)
 
 Other regional game builds, gameplay networking guarantees, exact Tekken 8 engine behavior, and full support for arbitrary character mods.
+
+## October 10, 2026 — implementation checkpoint
+
+A **standalone experimental PSP PRX** has now been written, compiled in PSPDEV/PSPSDK CI and packaged with a manifest requesting `memory = 80`. It loads two binary streams converted locally from the exact source INI and attempts automatic master initialization plus periodic Jin runtime execution. This initial build remains **untested in real PPSSPP**; passing CI is a compiler/build check only. The official `tekken6-ultrawide` code, binary and release are unchanged. The next stage is to test a cold-boot fight with both Jin CWCheats disabled, verify `Jin8.log`, custom move availability, ultrawide aspect/HUD, replacement fonts/textures and fast-forward, then debug only observed implementation failures.

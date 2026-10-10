@@ -16,3 +16,5 @@ Node.js 22+ is recommended. No npm install or PPSSPP binary modification is requ
 - `probes/watch-jin-move-conditions.mjs` — bounded read-only move/event watcher (live moveset pointer resolution, move IDs, selected conditional links, camera/speed field samples). Max 80 snapshots; samples are sequential, not atomic.
 
 - `probes/watch-jin-cinematics.mjs` — focused, read-only nine-address monitor of speed mode, zoom, camera rate, move IDs, and game-effect gates. Auto-flags interesting state and saves a bounded event tail. No installs and no mod edits.
+
+- `build_jin8_resource.py` — converts the exact original Jin master/runtime CWCheat text into two compact binary data streams consumed automatically by the standalone PRX. Validates source SHA-256 and exact record counts. Neither source cheat nor converted outputs are stored in the public repo.
