@@ -43,3 +43,7 @@ Known instruction pairs in stock EBOOT, all observed as `LUI 0x3C013FE3` then `O
 2. A plausible pointer value is not evidence that it points to the correct struct.
 3. Runtime `memory.read_u32` may show PPSSPP replacement/JIT details at code sites; use `memory.read` with `replacements:false` to inspect unmodified guest instruction bytes.
 4. Candidate character and current-move fields should be sampled at **menu, select, fight, round transition, and after master activation** before making a lifecycle hook.
+
+## Baseline caveat — camera preset and high memory
+
+The October 10 stock-labeled captures show camera word `0x3C013F82`, matching the low halfword of ultrawide's optional **Camera - Wider** preset (`0x3F82`). Consequently, do not call these captures fully camera-cheat-free. The high target `0x0A1F0AB0` is roughly 33.94 MiB above `0x08000000`, beyond 32 MiB, and was invalid in both observed states. Confirm expanded-memory setting during mod tests.

@@ -53,3 +53,5 @@ The first `stock-menu` and `stock-jin-battle` captures are analyzed in [Experime
 ## Second-stage bounded pointer capture
 
 Follow [remote debugging instructions](../../docs/development/remote-debugging.md#deep-pointer-window-follow-up). Re-capture stock and successfully modded Jin in the same match phase using `--inspect-pointers`, then compare. This is passive; the source mod must still be activated manually for the mod-side baseline.
+
+**Control caveat:** Both first captures contain a camera word matching the ultrawide optional `Camera - Wider` setting. Repeat with camera cheats disabled if a completely stock camera control is needed; otherwise keep camera conditions identical across A/B and record the setting.

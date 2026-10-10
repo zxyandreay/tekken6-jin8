@@ -40,3 +40,9 @@ Five of the seven candidate character/move fields changed. The character ID `0x0
 **Not supported yet:** verified table structure, correct allocation timing, exact mod injection hook, Rage Art state, or compatibility with a live Jin mod. The snapshots were not taken with the CPU paused.
 
 **Next:** sample small, validated windows at the current moveset/current-move pointer targets in a stock fight and after successfully activating the original Jin master cheat. Record whether the mod actually changes Jin's available moves. Prefer manually paused PPSSPP during capture. The probes must not modify memory.
+
+## Camera baseline caveat
+
+The captured camera word `0x3C013F82` has low halfword `0x3F82`, which matches the `Camera - Wider` optional CWCheat in `tekken6-ultrawide/ULUS10466.ini` (`_L 0x1015350C 0x00003F82`). This may indicate an enabled camera preset or an equivalent existing patch. The captures are usable as a **stock Jin moveset** baseline, but **not proven to be a completely cheat-free camera baseline**. Keep the camera setting identical for stock/mod A/B, and for a clean stock-control repeat disable camera cheats and cold-boot first.
+
+The high-address target `0x0A1F0AB0` corresponds to offset `0x021F0AB0` (approximately 33.94 MiB) above PSP guest base `0x08000000`. This is beyond a 32 MiB contiguous memory range; the capture only proves the address was invalid in the observed configuration, not which memory option was selected.
