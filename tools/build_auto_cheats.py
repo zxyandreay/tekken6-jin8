@@ -108,7 +108,7 @@ def generate(source: Path, target: Path, allow_modified=False):
         # Finish the master only if both flag=1 and late payload is present.
         output.write(f"_L 0xE0020001 {GATE_CHECK}\n")
         output.write(f"_L 0xE0017C0E 0x{LAST_MASTER_OFFSET:08X}\n")
-        output.write(f"_L 0x2{GATE_OFFSET:07X} 0x00000002\n\n")
+        output.write(f"_L 0x{(0x20000000 | GATE_OFFSET):08X} 0x00000002\n\n")
         output.write("_C1 Jin8 Auto Runtime (After Master)\n")
         output.write(f"_L 0xE{len(runtime):03X}0002 {GATE_CHECK}\n")
         for item in runtime:
