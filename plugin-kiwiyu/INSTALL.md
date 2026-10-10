@@ -1,31 +1,37 @@
-# KiwiYu Jin 1.0 — no-cheats experimental PRX v0.1
+# KiwiYu Jin 1.0 v0.4 — SmoothGuard
 
-This is a new independent standalone plugin; disable previous Jin8 and Jin8Gate. Leave official ultrawide unchanged. The original user-supplied ZIP has two _C0 masters (436,692 and 437,310 instructions) and one _C1 runtime called JIN Moves (5,113 instructions). Both masters load automatically once and the cached runtime executes every ~16ms, with PPSSPP Cheats globally OFF.
+**Experimental standalone PRX, not yet Android validated.** Builds from the user's original Kiwi Yu source, with both master streams and full JIN Moves unchanged. No PPSSPP native Cheats required for core. The official Tekken6Ultrawide remains unchanged.
 
-The original creator's guide requests "refresh interval 16" in the Cheats tab and says "Plugins required" without naming them. This PRX avoids relying on CWCheats, but unspecified third-party plugins may still be required; functionality is not Android verified. The creator's archive does not explicitly document an input; the user reports that d/f+1+2 triggers Rage Art in this mod.
+## Why this version exists
 
-Install files under PSP/PLUGINS/Tekken6JinKiwiYu: plugin.ini, Tekken6JinKiwiYu.prx, jin_master.j8c, tekken8_master.j8c, jin_moves.j8c. The two masters are applied in the original order after the timer gate detects a live round. Unsupported modes fail closed, retaining original Jin without changes.
+The user-confirmed v0.3 `KiwiYu (1).log` shows both masters initialized, first runtime executed, and 711 changed writes, but certain moves had stutters/freezes and scripted zoom/slow-motion. An audit found 16 conditional 8.5MiB guest-memory copy commands, a linked invalid pointer sentinel, an enormous JIT invalidation fallback when 128 dirty ranges overflow, and the possibility of master reinitialization after just 1 second of temporary pointer disappearance.
 
-Do not enable optional _C0 groups for music, hazards, forced Rage, or Heat Meter (the latter requires Alboss textures). The full resource bytes must come from the user's ZIP, not from the old ULUS10466 (3).ini.
+## New default safety policy
 
-For a test, turn off Cheats globally, enable only this KiwiYu plugin and the original ultrawide, cold boot, and enter a normal timed fight with Jin P1. Check KiwiYu.log for "both KiwiYu masters initialized (2 signatures)" and "first runtime pass completed". If a crash occurs, stop and share the log. Do not rerun the known crash repeatedly.
+- Exact 4KiB-page JIT invalidations during the ~16ms runtime; deduplicated bitmap prevents a blanket invalidate when 128 disjoint addresses are exceeded.
+- Block each runtime memcpy greater than 1MiB (16 possible 8.5MiB instructions in original Kiwi Yu source) and suppress linked `0x12345678` pointer write.
+- Skip small and pointer-derived memcopies when source and destination are already identical.
+- Wait ~8 sec of missing Jin fight state before re-arming the 7MB master loader; do not reinitialize on incidental pointer/base changes.
+- Default **smooth camera**: suppress two *known* source camera/interpolation destinations `0x0895350C` and `0x08D6F270`. All other animation and special-move instructions are unchanged. This can modify original Rage Art choreography. Other speed effects may still occur.
+- All optional original Kiwi Yu cheats and ultrawide camera presets remain opt-in as separate `_C0` entries.
 
-This test build is not verified stable, cannot guarantee Rage Art execution, and the 7 MB master initialization can cause a battle-start pause.
+## Install and test
 
-### Original source integrity
+1. Back up your PPSSPP saves and particularly `PSP/Cheats/ULUS10466.ini`. The complete user-specific ZIP includes an optional `PSP/Cheats/ULUS10466.ini` and may **overwrite your existing game cheat list**. Merge manually if you have other entries.
+2. Fully close PPSSPP. Remove any previous `PSP/PLUGINS/Tekken6JinKiwiYu` folder (including old markers), disable older Jin8/Gate variants, and extract the v0.4 folder. Only enable KiwiYu v0.4 and the official **unchanged** Tekken6Ultrawide plugin.
+3. Keep global Cheats **OFF** for the first comparison. Select Jin P1, timed battle, wait until controllable, then press an ordinary attack once to satisfy the established gameplay readiness gate. One initial master setup can pause briefly, but recurrent freezing is not expected.
+4. Test ordinary combos and moves that previously froze; then Rage Art using `d/f+1+2` in Rage. Look at `PSP/PLUGINS/Tekken6JinKiwiYu/KiwiYu.log` for new JIT/largecopy/camera diagnostic counts.
+5. If crash, stop immediately and send screenshot and log. If stable but any moves/cinematics missing, send log and which move was affected.
 
-`tools/build_kiwiyu_resource.py` requires exact verified source INI checksum and preserves the joined instruction line 799754 as two commands. No third-party source data was committed. [Comparison and hashes](../research/jin-lifecycle/experiment-009-kiwiyu-jin-10.md).
+## Optional compatibility markers (disabled by default)
 
-## v0.2 activation diagnostics + optional cheat pack
+In `PSP/PLUGINS/Tekken6JinKiwiYu/` create an empty file with these exact names **only if you intentionally want to test the matching feature**, then cold boot:
 
-v0.1 was reported by the user to look like default Jin; it has **not** been confirmed to initialize the converted moveset on Android. The v0.2 PRX adds raw battle timer samples and the count of changed first-pass runtime memory writes. The first match should be tested with PPSSPP Cheats OFF and **no optional camera presets enabled**. If moves stay unchanged, obtain `PSP/PLUGINS/Tekken6JinKiwiYu/KiwiYu.log` and check whether it logged `ROUND TIMER ACTIVE`, `both KiwiYu masters initialized`, and `first runtime changed write operations`.
+- `KiwiYu.cinematics`: opt back into Kiwi Yu's authored camera zoom and interpolation effects. Test only *after* verifying smooth baseline.
+- `KiwiYu.allowlargecopies`: opt back into 16 source conditional 8.5MiB memory snapshots + invalid pointer sentinel; **HIGH RISK** of freezes/crashes. Do not use in normal play.
 
-The user-specific ZIP additionally includes `PSP/Cheats/ULUS10466.ini` with all four original KiwiYu optional groups plus all four **exact original ultrawide camera presets**, all disabled (`_C0`). The file **overwrites any existing cheat INI upon extraction**. Back up and merge existing custom cheats before installing. Optional cheats require enabling global Cheats; **do not re-enable original JIN Moves / master cheats alongside the PRX**. Heat Meter requires Alboss textures. Choose at most one camera preset and be aware that KiwiYu runtime also writes the camera instruction at `0x0895350C` (17 original instructions), so Rage Art camera effects may conflict. [Audit](../research/jin-lifecycle/experiment-010-kiwiyu-v02-options-and-activation.md).
+Neither marker is bundled/enabled by default. The full ZIP retains the same separate optional `_C0` cheats (No MUSIC, P1 Rage Turns On, Turn off Hazards, Heat Meter requiring Alboss textures, four official Ultrawide camera presets). If enabling optional native cheats in future, enable at most one camera preset and never load original Kiwi master/moveset `_C1` code alongside PRX.
 
-## v0.3 — direct diagnosis of 0x00000000 round timer
+## Status and credits
 
-The real user's v0.2 `KiwiYu.log` proves `round timer first sample = 0x00000000`, later still zero, followed by `NO MASTER WRITES`. Therefore stock Jin was **expected**—the plugin never loaded either master. v0.3 adds an alternate in-fight gate using *verified P1 stock-game input and active-move ID changes* after the existing 2-second stable-pointer prerequisite. **Wait for Jin to be controllable, then press Square after two seconds**. Normal gameplay attacks are not manual Cheats toggles. If you don't attack, the timer remains zero and the plugin intentionally does nothing.
-
-Look in `KiwiYu.log` for `PLAYER ACTION CONFIRMED` followed by both master signatures, user_main resume, and runtime changed-write count. If there are no such entries, the mod remains uninstalled; the previous v0.2 was not evidence of moveset compatibility. If game crashes after either master, stop after one test and send log/screenshot.
-
-Optional original KiwiYu four extras + original Ultrawide four cameras remain eight disabled-by-default `_C0` groups; global PPSSPP Cheats OFF for first test. The user-facing ZIP contains `PSP/Cheats/ULUS10466.ini`: **back up existing INI or merge options manually**. Preserve Ultrawide PRX untouched and disable all extra camera presets for Rage Art testing because the runtime shares guest `0x0895350C`. Full reasoning and tests in [Incident 011](../research/jin-lifecycle/incident-011-kiwiyu-zero-timer-v03-action-gate.md).
+Automated PSPDEV compilation and host regression checks passed. Android stability and Rage Art functionality **not yet verified**. Kiwi Yu retains original code authorship; respect the creator's noncommercial/source-linking request. See [incident 012](../research/jin-lifecycle/incident-012-v04-smoothguard.md).

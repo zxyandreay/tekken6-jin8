@@ -123,3 +123,7 @@ User observed partially working Jin8 animations but repeated stutters under v0.3
 ## Incident 011 — KiwiYu v0.2 never applied the masters
 
 [New log and v0.3 experimental activation fix](incident-011-kiwiyu-zero-timer-v03-action-gate.md): an always-zero in-game timer caused fail-closed `NO MASTER WRITES`. The conversion had never activated. New P1 actual attack/move gate uses known stock in-fight memory captures, original Kiwi source untouched. Compiles and host tests pass; still needs Android activation/crash/moveset verification.
+
+## Incident 012: KiwiYu v0.3 runtime stutters, v0.4 bounded JIT and copy guard
+
+[Source-backed findings + v0.4 SmoothGuard](incident-012-v04-smoothguard.md): original 16 × 8.5MiB conditional snapshot copies, invalid-pointer sentinel, v0.3 blanket runtime JIT invalidation overflow, overly eager full-master reapplication, intentional cinematic camera/interpolation changes. v0.4 passes PSPDEV + host checks; exact user Android result remains pending.

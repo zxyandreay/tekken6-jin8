@@ -38,3 +38,5 @@ When a hypothesis is demonstrated, update the canonical file in `docs/` and pres
 - [Experiment 010: KiwiYu v0.2 activation log and optional cheats / Ultrawide camera interaction](jin-lifecycle/experiment-010-kiwiyu-v02-options-and-activation.md).
 
 - [Incident 011: KiwiYu v0.2 stuck stock due zero timer; v0.3 player-input/move activity gate](jin-lifecycle/incident-011-kiwiyu-zero-timer-v03-action-gate.md).
+
+- [Incident 012: KiwiYu v0.4 SmoothGuard runtime optimization and camera options](jin-lifecycle/incident-012-v04-smoothguard.md).
