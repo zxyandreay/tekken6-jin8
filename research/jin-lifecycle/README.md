@@ -65,3 +65,7 @@ node tools/probes/verify-master-payload.mjs --endpoint 192.168.0.101:39100 --lab
 # after cold boot and deliberate manual activation in a stable Jin fight:
 node tools/probes/verify-master-payload.mjs --endpoint 192.168.0.101:39100 --label master-mod-matched
 ```
+
+## Experiment 003 (matched setup)
+
+[Findings](experiment-003-results.md): With ultrawide and expanded memory in both states, **0/11 stock vs 11/11 mod** signatures. Next compare runtime pointer targets with `trace-jin-runtime-links.mjs` and capture real known move triggers. The camera read now bypasses PPSSPP instruction replacements.

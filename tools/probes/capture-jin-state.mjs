@@ -14,7 +14,7 @@ const CANDIDATES = [
   [0x08C07D1C, 'incoming_move_id_candidate'],
   [0x08C07D24, 'incoming_move_pointer_candidate'],
   [0x08C07D3C, 'input_button_candidate'],
-  [0x0895350C, 'shared_camera_word'],
+  // Code site (camera LUI instruction) is read separately with replacements:false below.
 ];
 const EFFECT_WORDS = [
   [0x08C52890, 'game_speed_control_candidate'],
@@ -106,6 +106,10 @@ async function main() {
     } catch (e) { data.modules = { error: e.message }; }
 
     for (const [addr, name] of CANDIDATES) data.candidateWords[name] = await captureWord(client, addr);
+    // The earlier memory.read_u32 camera probe could return a JIT/emuhack replacement.
+    // Read original guest code bytes, just like the existing aspect instruction probes.
+    data.candidateWords.shared_camera_word = await captureWord(client, 0x0895350C, true);
+    data.cameraReadMode = 'memory.read replacements:false (guest instruction)';
     for (const addr of ULTRAWIDE_WORDS) data.ultrawideInstructionWords[hex(addr)] = await captureWord(client, addr, true);
     for (const [addr, name] of EFFECT_WORDS) data.effectWords[name] = await captureWord(client, addr);
     for (const [addr, name] of PAYLOAD_SAMPLES) data.payloadSamples[name] = await captureBytes(client, addr);

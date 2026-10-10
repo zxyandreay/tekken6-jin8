@@ -53,3 +53,9 @@ The October 10 stock-labeled captures show camera word `0x3C013F82`, matching th
 The source's 32-bit direct-write opcode `_L 0x219F0AB0 0x00DF7C0E` corresponds to guest **`0x0A1F0AB0`**, because CWCheat address offsets are based on `0x08800000` (not `0x08000000`). This was confirmed in the user's October 10 mod snapshot as little-endian `0e7cdf00`, and matches the highest direct target discovered in the 511,607-record master. The default RAM window ends before this address; expanded-memory dependency is a real issue for complete payload loading. See [Experiment 002](../../research/jin-lifecycle/experiment-002-results.md).
 
 The first 256 bytes at `0x08754400` were unchanged between stock and mod snapshots; that alone is **not** proof the active move table is unmodified.
+
+## Experiment 003: deep runtime pointer writes
+
+The original `(1)jin` cheat repeatedly uses `_L 0x604078E0 <value>` followed by `_L 0x00020001 <offset>`. These are conditional CWCheat **32-bit pointer writes** based at live guest `[0x08C078E0]`, observed as `0x08754400`. For example, offset `0x0002C250` maps to destination **`0x08780650`**, and offset `0x000624D4` maps to **`0x087B68D4`**. Their target values can appear/disappear depending on the current move/other conditions. The unchanged first 256 bytes at `0x08754400` do not cover these writes. The new read-only probe inspects 8 exact offset destinations.
+
+Camera `0x0895350C` is a guest **instruction** and must use `memory.read` with `replacements:false`; earlier stock `memory.read_u32` value `0x682CE4C8` may have been a JIT/emuhack replacement. Static EBOOT word at this address is `0x3C013F80`. See [Experiment 003](../../research/jin-lifecycle/experiment-003-results.md).

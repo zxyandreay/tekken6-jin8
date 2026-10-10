@@ -91,3 +91,23 @@ node tools/probes/verify-master-payload.mjs --endpoint 192.168.0.101:39100 --lab
 Also take a new `--inspect-pointers` stock capture **with ultrawide already enabled**, because the first deep comparison had ultrawide **OFF only in stock**. Disabled camera cheats are preferred in both sessions. Use a fresh cold boot for each phase; while the mod master is executing, avoid other memory probes until initialization is complete. The signature probe only reads 11 words and writes JSON locally into ignored `captures/`. It does not activate cheats, install hooks or change emulator state.
 
 Results with 11/11 matching signatures would support broad payload presence but **cannot prove all 511,607 master records were installed or runtime conditions work**. See [Experiment 002 report](../../research/jin-lifecycle/experiment-002-results.md).
+
+## Experiment 003: passive conditional runtime pointer probes
+
+The master payload is now confirmed at all **11 of 11** sampled writes with ultrawide present in both stock and mod tests. Further master-sample replays have diminishing value. The more important unresolved question is the source runtime's conditional **0x6 pointer writes** into deep offsets of the move table (source examples: `0x604078E0 0x0909CE00` then `0x00020001 0x0002C250`).
+
+A new `trace-jin-runtime-links.mjs` probe follows **one validated pointer** at `0x08C078E0` and reads eight explicitly known offsets (no recursive chasing or writes). These are **conditional** values, so `0 matches` during idle is **not a load failure**.
+
+```powershell
+node tools/probes/trace-jin-runtime-links.mjs --endpoint 192.168.0.101:39100 --label links-stock-idle
+# Cold-boot same plugin/memory setup; manually initialize Jin master, then return to normal Jin idle:
+node tools/probes/trace-jin-runtime-links.mjs --endpoint 192.168.0.101:39100 --label links-mod-idle
+# Optional if the mod is stable and a move reliably triggers the effect:
+node tools/probes/trace-jin-runtime-links.mjs --endpoint 192.168.0.101:39100 --label links-mod-attack --samples 20 --interval-ms 200
+```
+
+The CLI stores distinct JSON under ignored `captures/`. Never reuse a label already present, since output uses non-overwriting `wx`. Record which move/input was performed and whether odd camera or SlowMo behavior occurred.
+
+**Camera probe correction:** `shared_camera_word` at `0x0895350C` is executable code; the snapshot tool now reads it via `memory.read` `replacements:false`, not `memory.read_u32`. The old stock read `0x682CE4C8` may be a JIT/emuhack replacement rather than an actual camera patch. This interpretation is pending a raw-code capture. Do not use that prior sample to claim a bug in ultrawide.
+
+Also see [Experiment 003 findings](../../research/jin-lifecycle/experiment-003-results.md).
