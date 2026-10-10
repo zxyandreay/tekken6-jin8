@@ -1,0 +1,33 @@
+name: Research tooling checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify Node syntax
+        run: |
+          node --check tools/probes/lib/ppsspp-client.mjs
+          node --check tools/probes/ppsspp-smoke.mjs
+          node --check tools/probes/capture-jin-state.mjs
+          node --check tools/probes/compare-jin-states.mjs
+      - name: Unit tests (Node)
+        run: npm test
+      - name: Unit tests (Python)
+        run: python -m unittest discover -s tests -p 'test_*.py'
