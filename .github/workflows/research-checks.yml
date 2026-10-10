@@ -27,6 +27,10 @@ jobs:
           node --check tools/probes/ppsspp-smoke.mjs
           node --check tools/probes/capture-jin-state.mjs
           node --check tools/probes/compare-jin-states.mjs
+          node --check tools/probes/lib/master-signatures.mjs
+          node --check tools/probes/verify-master-payload.mjs
+      - name: Verify research CLI loads
+        run: node tools/probes/verify-master-payload.mjs --help
       - name: Unit tests (Node)
         run: npm test
       - name: Unit tests (Python)
