@@ -97,3 +97,7 @@ User observed partially working Jin8 animations but repeated stutters under v0.3
 ## Incident 005: incomplete JIT write coverage in custom interpreter
 
 [Incident 005](incident-005-v042-jit-coverage.md): user log shows master and first runtime completed in v0.4.2, then PC `0x10` crash; host CWCheat comparison found the PRX failed to invalidate guest JIT outside the first 2 MiB and across memcopies. v0.4.3 batches all-range writes. Android result unknown.
+
+## Incident 006: v0.4.3 still crashes
+
+[JITSync failed on-device](incident-006-v043-repeat-null-jump.md): attached `Jin8 (2).log` shows master JIT invalidation, initialization and first runtime pass complete before `PC=0x10` crash; RA now `0x08896988`. Stop proposing unverified fixes; try existing `Jin8.masteronly` mode with Cheats OFF once and use its outcome to isolate master vs runtime responsibility.

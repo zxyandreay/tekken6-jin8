@@ -84,3 +84,7 @@ User's attached log ends at `user_main resumed` after master initialization, wit
 ## Incident 005 — v0.4.2 finishes first runtime pass, invalid jump persists
 
 Confirmed v0.4.2 log through `first runtime pass completed`, followed by Android PC `0x00000010` / RA `0x088C7B50`, `Cheats: Y` status. PPSSPP-native CWCheat invalidates host JIT for writes across memory, while our PRX only covered the first 2 MiB. v0.4.3 collects and flushes all changed master/runtime ranges, including memcopy destinations; compiles with PSPSDK. Next test requires Cheats OFF; optional master-only diagnostic marker isolates master vs runtime. [Incident 005](../research/jin-lifecycle/incident-005-v042-jit-coverage.md).
+
+## Incident 006 — v0.4.3 fails; stop speculative build cycle
+
+Android crash remains `PC=0x10`, new RA `0x08896988` even after batched extended RAM JIT invalidation, master signature checks, and first completed runtime pass. One controlled **Cheats OFF + master-only marker** test in the existing build is needed before further engineering. The EBOOT return-site instruction and source opcode mix are documented in [Incident 006](../research/jin-lifecycle/incident-006-v043-repeat-null-jump.md). Do not add arbitrary delays or claim a fix.

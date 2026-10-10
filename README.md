@@ -33,3 +33,7 @@ The supplied Jin8.log establishes successful master preflight, two expected memo
 ## Incident 005 — v0.4.2 first runtime completes but PC=0x10 persists
 
 The user supplied a crash PC `0x10`, RA `0x088C7B50`, and a Jin8.log proving `first runtime pass completed`. A PPSSPP source comparison found a concrete mismatch: our standalone PRX previously invalidated its JIT only for memory writes in `0x08800000..0x08A00000`, missing extended-RAM payload and memcopy destinations. v0.4.3 batches guest JIT invalidation across **all changed addresses**. This is **a compiled test fix, not yet an Android-verified crash resolution**. Keep Cheats globally OFF. See [Incident 005](research/jin-lifecycle/incident-005-v042-jit-coverage.md).
+
+## Incident 006 — v0.4.3 JIT fix did not prevent PC=0x10
+
+The user retested v0.4.3: `PC=0x00000010`, `RA=0x08896988`; `Jin8.log` confirms the master, JIT invalidation, and first runtime pass completed. The reported status still shows `Cheats: Y`. **Do not treat v0.4.3 as a stable fix.** Before creating another full plugin build, run the already-included **`Jin8.masteronly` diagnostic with Cheats globally OFF** to identify whether the crash requires runtime writes. See [Incident 006](research/jin-lifecycle/incident-006-v043-repeat-null-jump.md).
