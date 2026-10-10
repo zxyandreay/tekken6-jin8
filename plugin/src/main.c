@@ -1,5 +1,6 @@
 #include <pspkernel.h>
 #include <pspthreadman.h>
+#include <pspmodulemgr.h>
 #include <pspiofilemgr.h>
 #include <psputils.h>
 #include <pspctrl.h>
@@ -31,6 +32,8 @@ PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER);
 #define BLOCK_WORDS 128
 #define SAFE_PATH "ms0:/PSP/PLUGINS/Tekken6Jin8/Jin8.safe"
 #define CURRENT_MOVE_ADDR 0x08C07A18u
+#define MASTER_ONLY_PATH "ms0:/PSP/PLUGINS/Tekken6Jin8/Jin8.masteronly"
+#define PROTECTED_MAX 28
 
 typedef struct { uint32_t a, b; } Line;
 typedef struct {
@@ -43,6 +46,11 @@ typedef struct {
 static volatile int running = 1;
 static volatile int active_thread = 0;
 static int safe_mode = 0;
+static int master_only_mode = 0;
+static int write_rejected = 0;
+typedef struct { uint32_t start, end; } Protected;
+static Protected protected_ranges[PROTECTED_MAX];
+static int protected_count = 0;
 static SceUID thread_id = -1;
 static SceUID log_fd = -1;
 
@@ -65,8 +73,60 @@ static uint32_t getmem(uint32_t a, int size) {
     if (size == 2) return *(volatile uint16_t *)(uintptr_t)a;
     return *(volatile uint32_t *)(uintptr_t)a;
 }
+static int intersects_protected(uint32_t addr, uint32_t size) {
+    uint64_t end = (uint64_t)addr + size;
+    for (int i = 0; i < protected_count; ++i)
+        if (addr < protected_ranges[i].end && end > protected_ranges[i].start) return 1;
+    return 0;
+}
+static void note_hex(const char *prefix, uint32_t word) {
+    char text[96];
+    const char *digits = "0123456789ABCDEF";
+    unsigned int n = (unsigned int)strlen(prefix);
+    if (n > 70) return;
+    memcpy(text, prefix, n);
+    text[n++] = '0'; text[n++] = 'x';
+    for (int i = 7; i >= 0; --i) text[n++] = digits[(word >> (i * 4)) & 15];
+    text[n] = 0;
+    note(text);
+}
+static int protect_loaded_modules(void) {
+    SceUID ids[64];
+    int count = 0, self = 0;
+    if (sceKernelGetModuleIdList(ids, 64, &count) < 0 || count > 64) {
+        note("cannot enumerate modules: fail closed"); return 0;
+    }
+    for (int j = 0; j < count; ++j) {
+        SceKernelModuleInfo info;
+        memset(&info, 0, sizeof(info)); info.size = sizeof(info);
+        if (sceKernelQueryModuleInfo(ids[j], &info) < 0) {
+            note("module query unavailable: fail closed"); return 0;
+        }
+        if (strcmp(info.name, "tekken") == 0) continue;
+        if (strcmp(info.name, "Tekken6Jin8") == 0) self = 1;
+        if (info.nsegment < 0 || info.nsegment > 4) return 0;
+        for (int k = 0; k < info.nsegment; ++k) {
+            uint32_t addr = (uint32_t)info.segmentaddr[k];
+            uint32_t size = (uint32_t)info.segmentsize[k];
+            if (!size) continue;
+            if (protected_count >= PROTECTED_MAX || !range_ok(addr, size)) {
+                note("invalid protected segment: fail closed"); return 0;
+            }
+            protected_ranges[protected_count].start = addr;
+            protected_ranges[protected_count].end = addr + size;
+            protected_count++;
+        }
+    }
+    if (!self || !protected_count) {
+        note("own module not identified: fail closed"); return 0;
+    }
+    note_hex("protected module ranges: ", (uint32_t)protected_count);
+    return 1;
+}
+
 static void setmem(uint32_t a, int size, uint32_t val) {
     if (!range_ok(a, size) || (a & (size - 1)) != 0) return;
+    if (intersects_protected(a, (uint32_t)size)) { write_rejected = 1; return; }
     uint32_t mask = size == 1 ? 0xFFu : (size == 2 ? 0xFFFFu : 0xFFFFFFFFu);
     val &= mask;
     /* Do not constantly repatch code or invalidate every JIT block.
@@ -108,6 +168,51 @@ static int read_next(Reader *r, Line *out) {
     r->remaining--;
     return 1;
 }
+/* Conservatively scan every original direct master write before performing any.
+ * This catches collisions with relocated PRX modules without altering ultrawide. */
+static int preflight_master(void) {
+    Reader rd;
+    rd.fd = -1;
+    if (!open_reader(&rd, MASTER_PATH, MASTER_LINES)) return 0;
+    Line x;
+    unsigned int seen = 0;
+    while (read_next(&rd, &x)) {
+        ++seen;
+        uint32_t type = x.a >> 28;
+        if (type == 0 || type == 1 || type == 2) {
+            uint32_t a = cwaddr(x.a);
+            uint32_t size = type == 2 ? 4 : (type == 1 ? 2 :
+                ((x.b & 0xFFFF0000u) ? 4 : ((x.b & 0xFF00u) ? 2 : 1)));
+            if (!range_ok(a, size) || intersects_protected(a, size)) {
+                note_hex("MASTER MODULE COLLISION at ", a);
+                close_reader(&rd); return 0;
+            }
+        }
+    }
+    close_reader(&rd);
+    if (seen != MASTER_LINES) { note("master preflight read was incomplete"); return 0; }
+    note("master preflight passed");
+    return 1;
+}
+/* Suspend the game-update thread while writing a large, linked payload.
+ * The previous build wrote asynchronously while user_main was executing. */
+static SceUID suspend_user_main(void) {
+    SceUID ids[64], self = sceKernelGetThreadId();
+    int count = 0;
+    if (sceKernelGetThreadmanIdList(SCE_KERNEL_TMID_Thread, ids, 64, &count) < 0 ||
+        count > 64) return -1;
+    for (int i = 0; i < count; ++i) {
+        if (ids[i] == self) continue;
+        SceKernelThreadInfo info;
+        memset(&info, 0, sizeof(info)); info.size = sizeof(info);
+        if (sceKernelReferThreadStatus(ids[i], &info) >= 0 &&
+            strcmp(info.name, "user_main") == 0) {
+            return sceKernelSuspendThread(ids[i]) >= 0 ? ids[i] : -1;
+        }
+    }
+    return -1;
+}
+
 typedef struct {
     const Line *data;
     uint32_t count, index;
@@ -133,8 +238,10 @@ static int test_value(uint32_t left, uint32_t right, uint32_t op) {
     return 0;
 }
 static int execute(Stream *s) {
+    write_rejected = 0;
     Line x, y;
     while (running && next(s, &x)) {
+        if (write_rejected) { note("attempted module write: stop interpreter"); return 0; }
         uint32_t type = x.a >> 28, a = cwaddr(x.a), b = x.b;
         uint32_t n, addr, val;
         switch (type) {
@@ -177,7 +284,7 @@ static int execute(Stream *s) {
         case 5: {
             if (!next(s, &y)) return 0;
             uint32_t to = cwaddr(y.a);
-            if (b && b < 24u * 1024u * 1024u && range_ok(a, b) && range_ok(to, b)) {
+            if (b && b < 24u * 1024u * 1024u && range_ok(a, b) && range_ok(to, b) && !intersects_protected(to, b)) {
                 memmove((void *)(uintptr_t)to, (const void *)(uintptr_t)a, b);
             }
             break;
@@ -205,7 +312,7 @@ static int execute(Stream *s) {
                     uint32_t src = getmem(a, 4) + off;
                     uint32_t dst = getmem(base_addr, 4) + (x.a & 0x0FFFFFFFu);
                     if (val && val < 24u * 1024u * 1024u &&
-                        range_ok(src, val) && range_ok(dst, val)) {
+                        range_ok(src, val) && range_ok(dst, val) && !intersects_protected(dst, val)) {
                         memmove((void *)(uintptr_t)dst, (const void *)(uintptr_t)src, val);
                     }
                     mode = -1;
@@ -233,7 +340,7 @@ static int execute(Stream *s) {
             return 0;
         }
     }
-    return 1;
+    return !write_rejected;
 }
 static int validate_runtime(void) {
     Reader rd;
@@ -294,14 +401,17 @@ static int loader_thread(SceSize args, void *argp) {
     (void)args; (void)argp;
     active_thread = 1;
     log_fd = sceIoOpen(LOG_PATH, PSP_O_WRONLY | PSP_O_CREAT | PSP_O_TRUNC, 0666);
-    note("Tekken6Jin8 experimental PRX v0.2 initialized");
+    note("Tekken6Jin8 experimental PRX v0.3 initialized");
     SceUID safefd = sceIoOpen(SAFE_PATH, PSP_O_RDONLY, 0);
     if (safefd >= 0) {
         sceIoClose(safefd);
         safe_mode = 1;
         note("SAFE MODE: no cheat writes; footprint/texture control only");
     }
+    SceUID onlyfd = sceIoOpen(MASTER_ONLY_PATH, PSP_O_RDONLY, 0);
+    if (onlyfd >= 0) { sceIoClose(onlyfd); master_only_mode = 1; note("MASTER-ONLY diagnostic enabled"); }
     if (!safe_mode && !validate_runtime()) goto done;
+    if (!safe_mode && !protect_loaded_modules()) goto done;
     int installed = 0, idle_cycles = 0;
     uint32_t prior_base = 0;
     while (running) {
@@ -318,8 +428,23 @@ static int loader_thread(SceSize args, void *argp) {
             if (getmem(CURRENT_MOVE_ADDR, 4) == 0) {
                 sceKernelDelayThread(25000); continue;
             }
-            note("Jin fight detected; initializing master");
-            if (!load_master()) {
+            note("Jin fight detected; inspecting master targets");
+            if (!preflight_master()) {
+                note("master preflight refused unsafe write, no initialization attempted");
+                while (running && jin_fight_ready(0)) sceKernelDelayThread(50000);
+                continue;
+            }
+            SceUID game = suspend_user_main();
+            if (game < 0) {
+                note("cannot suspend user_main, refusing unsynchronized master");
+                while (running && jin_fight_ready(0)) sceKernelDelayThread(50000);
+                continue;
+            }
+            note("user_main suspended; beginning master initialization");
+            int master_ok = load_master();
+            sceKernelResumeThread(game);
+            note("user_main resumed");
+            if (!master_ok) {
                 /* Fail closed and throttle retry; avoid infinite repeated 4MB writes. */
                 note("master failed; waiting for next fight");
                 installed = 0;
@@ -328,7 +453,12 @@ static int loader_thread(SceSize args, void *argp) {
             }
             installed = 1; prior_base = base;
         }
-        if (!execute_runtime()) {
+        if (master_only_mode) { sceKernelDelayThread(50000); continue; }
+        SceUID game = suspend_user_main();
+        if (game < 0) { note("cannot suspend user_main for runtime; stopping"); goto done; }
+        int runtime_ok = execute_runtime();
+        sceKernelResumeThread(game);
+        if (!runtime_ok) {
             note("runtime execution failed; stopping interpreter for safety");
             goto done;
         }
