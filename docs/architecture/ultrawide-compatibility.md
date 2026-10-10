@@ -38,3 +38,7 @@ Ultrawide accepted footprint is one `PT_LOAD` with `p_filesz=p_memsz=0x0EB0`; it
 ## v0.3 approach: keep ultrawide 100% untouched
 
 After v0.2 still crashed and lacked HD custom font textures, the Jin8 loader changed architectures. The new independent `Tekken6Jin8Gate.prx` maps only `0x0434` bytes versus rejected v0.2 `0x1DD8` and the accepted ultrawide `0x0EB0`. It writes only the high-RAM source-independent sentinel and hands data mutations to PPSSPP's existing CWCheat engine. The gate plugin requests its own `memory=80`. The user-specific generated game cheat INI includes the four original camera options, all OFF; using it can require **replacing or merging the shared PPSSPP cheat INI**, but not editing/replacing the official ultrawide PRX, manifest, source, or published release. Full runtime coexistence/font correctness is **not confirmed**. See [Incident 002](../../research/jin-lifecycle/incident-002-v02-crash-lite-v03.md).
+
+## v0.4 gameplay-first independent PRX
+
+The user explicitly rejected v0.3 because its CWCheat-gate design required Cheats enabled. v0.4 is a standalone `Tekken6Jin8` PRX and loads its own binary source data with memory=80; PPSSPP Cheats may be OFF. The official ultrawide v1.2.1 PRX/manifest/release is unchanged. Master initializes once and runtime stays cached in RAM. Current mapped Jin8 PRX is 30,512 B, so custom font/texture replacement mapping remains an unresolved compatibility risk (deprioritized by user). See [Experiment 006](../../research/jin-lifecycle/experiment-006-v04-standalone-optimization.md).

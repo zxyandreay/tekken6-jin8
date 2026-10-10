@@ -81,3 +81,7 @@ node tools/probes/verify-master-payload.mjs --endpoint 192.168.0.101:39100 --lab
 ## Android incidents and automatic implementation
 
 v0.1 crashed and altered texture-font replacement selection; v0.2 reduced resident footprint but still crashed **at Jin fight start** while menu fonts remained wrong. See [Incident 001](incident-001-android-crash-fonts.md) and [Incident 002 + lite v0.3 pivot](incident-002-v02-crash-lite-v03.md). Follow-up is **testing the new implementation** rather than repeating the original source-cheat runtime probes.
+
+## Experiment 006 / gameplay-first standalone pivot
+
+User observed partially working Jin8 animations but repeated stutters under v0.3; explicitly rejected any implementation requiring Cheats enabled. [v0.4 standalone optimization report](experiment-006-v04-standalone-optimization.md): cache runtime once, master only once under protected fight transition; no PPSSPP Cheats dependence. Font regressions deferred. The new PRX builds but requires an Android test before being considered stable.
