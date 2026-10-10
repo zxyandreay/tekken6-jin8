@@ -1,0 +1,35 @@
+name: Build Jin8 Standalone v0.4 (no PPSSPP cheats)
+on:
+  push:
+    paths:
+      - 'plugin-standalone/**'
+      - '.github/workflows/build-jin8-standalone.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: pspdev/pspdev:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile standalone PRX
+        run: |
+          make -C plugin-standalone
+          test -s plugin-standalone/Tekken6Jin8.prx
+          test "$(od -An -tu2 -j 44 -N 2 plugin-standalone/Tekken6Jin8.prx | tr -d '[:space:]')" = "1"
+          memsz="$(od -An -tu4 -j 72 -N 4 plugin-standalone/Tekken6Jin8.prx | tr -d '[:space:]')"
+          echo "Standalone PRX mapped bytes: $memsz"
+          test "$memsz" -lt 45056
+      - name: Package code only (user-owned payload excluded)
+        run: |
+          mkdir -p dist/PSP/PLUGINS/Tekken6Jin8
+          cp plugin-standalone/Tekken6Jin8.prx dist/PSP/PLUGINS/Tekken6Jin8/
+          cp plugin-standalone/config/plugin.ini dist/PSP/PLUGINS/Tekken6Jin8/
+          cp plugin-standalone/INSTALL.md dist/INSTALL.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Tekken6Jin8-Standalone-v0.4-PRX
+          path: dist/
+          if-no-files-found: error
