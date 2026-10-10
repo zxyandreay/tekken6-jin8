@@ -1,0 +1,35 @@
+name: Build KiwiYu Jin standalone plugin
+on:
+  push:
+    paths:
+      - 'plugin-kiwiyu/**'
+      - '.github/workflows/build-jin-kiwiyu.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: pspdev/pspdev:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile KiwiYu standalone
+        run: |
+          make -C plugin-kiwiyu
+          test -s plugin-kiwiyu/Tekken6JinKiwiYu.prx
+          test "$(od -An -tu2 -j 44 -N 2 plugin-kiwiyu/Tekken6JinKiwiYu.prx | tr -d '[:space:]')" = "1"
+          memsz="$(od -An -tu4 -j 72 -N 4 plugin-kiwiyu/Tekken6JinKiwiYu.prx | tr -d '[:space:]')"
+          echo "Mapped bytes: $memsz"
+          test "$memsz" -lt 65536
+      - name: Assemble code-only package
+        run: |
+          mkdir -p dist/PSP/PLUGINS/Tekken6JinKiwiYu
+          cp plugin-kiwiyu/Tekken6JinKiwiYu.prx dist/PSP/PLUGINS/Tekken6JinKiwiYu/
+          cp plugin-kiwiyu/config/plugin.ini dist/PSP/PLUGINS/Tekken6JinKiwiYu/
+          cp plugin-kiwiyu/INSTALL.md dist/INSTALL.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Tekken6JinKiwiYu-v0.1-PRX
+          path: dist/
+          if-no-files-found: error
