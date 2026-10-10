@@ -24,6 +24,7 @@ PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER);
 #define MASTER_FIRST 0x08B98190u
 #define MASTER_LAST  0x0A1F0AB0u
 #define MASTER_LAST_VAL 0x00DF7C0Eu
+#define LEGACY_AUTOGATE_ADDR 0x0A1FFFC0u
 #define MAX_GUEST    0x0D000000u  /* memory=80, conservative bound */
 #define MASTER_PATH "ms0:/PSP/PLUGINS/Tekken6Jin8/master.j8c"
 #define RUNTIME_PATH "ms0:/PSP/PLUGINS/Tekken6Jin8/runtime.j8c"
@@ -51,6 +52,7 @@ static volatile int running = 1;
 static volatile int active_thread = 0;
 static int safe_mode = 0;
 static int master_only_mode = 0;
+static int logged_first_runtime = 0;
 static int write_rejected = 0;
 static Line *cached_runtime = NULL;
 static int cached_runtime_ready = 0;
@@ -381,6 +383,23 @@ static int execute_runtime(void) {
     stream.count = RUNTIME_LINES;
     return execute(&stream);
 }
+/* The rejected v0.3 ZIP enables legacy auto-cheats by default.
+ * If the old gate or master payload is present before our own initialization,
+ * do not run a second huge writer over already-modified guest RAM.
+ * This is diagnostic protection, not a way to safely run both at once. */
+static int legacy_master_conflict(void) {
+    uint32_t gate = getmem(LEGACY_AUTOGATE_ADDR, 4);
+    if (gate == 1u || gate == 2u) {
+        note("CONFLICT: legacy Jin8 auto-cheat gate active; master NOT attempted");
+        return 1;
+    }
+    if (getmem(MASTER_MARK, 4) == MASTER_FIRST &&
+        getmem(MASTER_LAST, 4) == MASTER_LAST_VAL) {
+        note("CONFLICT: pre-existing Jin8 master data; refusing duplicate write");
+        return 1;
+    }
+    return 0;
+}
 static int load_master(void) {
     Reader rd;
     rd.fd = -1;
@@ -419,7 +438,7 @@ static int loader_thread(SceSize args, void *argp) {
     (void)args; (void)argp;
     active_thread = 1;
     log_fd = sceIoOpen(LOG_PATH, PSP_O_WRONLY | PSP_O_CREAT | PSP_O_TRUNC, 0666);
-    note("Tekken6Jin8 Standalone v0.4.1: guarded fight entry");
+    note("Tekken6Jin8 Standalone v0.4.2: fail-closed legacy conflict detection");
     SceUID safefd = sceIoOpen(SAFE_PATH, PSP_O_RDONLY, 0);
     if (safefd >= 0) {
         sceIoClose(safefd);
@@ -456,6 +475,11 @@ static int loader_thread(SceSize args, void *argp) {
         if (safe_mode) { sceKernelDelayThread(50000); continue; }
         if (!installed || base != prior_base) {
             note("Jin battle stable for 2 seconds; checking master targets");
+            if (legacy_master_conflict()) {
+                note("Abort this fight; disable PPSSPP Cheats and remove old v0.3 INI");
+                while (running && jin_fight_ready(0)) sceKernelDelayThread(50000);
+                continue;
+            }
             if (!preflight_master()) {
                 note("master preflight refused unsafe write, no initialization attempted");
                 while (running && jin_fight_ready(0)) sceKernelDelayThread(50000);
@@ -484,9 +508,14 @@ static int loader_thread(SceSize args, void *argp) {
         /* The massive master ran while user_main was suspended, but the
            small cached runtime runs on the scheduler thread like a cheat
            tick. Avoid per-frame suspend/resume JIT hitches. */
+        if (!logged_first_runtime) note("first runtime pass beginning");
         if (!execute_runtime()) {
             note("runtime execution failed; stopping interpreter for safety");
             goto done;
+        }
+        if (!logged_first_runtime) {
+            note("first runtime pass completed");
+            logged_first_runtime = 1;
         }
         sceKernelDelayThread(20000);
     }
