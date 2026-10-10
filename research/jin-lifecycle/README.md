@@ -119,3 +119,7 @@ User observed partially working Jin8 animations but repeated stutters under v0.3
 ## Experiment 010 — KiwiYu v0.2 optional cheat package and telemetry
 
 [Status and compatibility findings](experiment-010-kiwiyu-v02-options-and-activation.md): original KiwiYu v0.1 appears stock to user; v0.2 logs timer gate and actual runtime changed writes. Four KiwiYu optional groups + four ultrawide camera presets retained as `_C0` without duplicated core cheat engine. Camera address collision discovered. Full user-specific ZIP verified; Android functional test still pending.
+
+## Incident 011 — KiwiYu v0.2 never applied the masters
+
+[New log and v0.3 experimental activation fix](incident-011-kiwiyu-zero-timer-v03-action-gate.md): an always-zero in-game timer caused fail-closed `NO MASTER WRITES`. The conversion had never activated. New P1 actual attack/move gate uses known stock in-fight memory captures, original Kiwi source untouched. Compiles and host tests pass; still needs Android activation/crash/moveset verification.

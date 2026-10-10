@@ -108,3 +108,7 @@ An alternate user's supplied Jin 1.0 by KiwiYu source has 874,002 total master i
 ## Experiment 010 — KiwiYu v0.2 actual write diagnostic + optional packs
 
 v0.1 reported visually stock despite build success; without KiwiYu.log cannot know whether gate, master or runtime failed. Added first/periodic round timer logging and first runtime changed-write count in v0.2. User-owned optional source has four distinct _C0 groups, combined with four exact ultrawide camera presets all _C0 (off). Found 17 Kiwi runtime writes to same camera address 0x0895350C, so camera cheat cinematic compatibility not guaranteed. Core PRX independent of Cheats; optional groups need Cheats ON. No source master bytes published; ultrawide unchanged. [Experiment 010](../research/jin-lifecycle/experiment-010-kiwiyu-v02-options-and-activation.md).
+
+## Incident 011 — inactive KiwiYu v0.2 fixed by v0.3 in-fight input+move gate
+
+The user-supplied v0.2 log reports `0x090FBE4C == 0` during real fight. Old timer-only gate refused all master writes, so stock Jin was correct observed result. v0.3 adds a verified in-fight P1 input + current-move transition gate, with ~300ms follow-up and no early pointer-only injection. PRX compilation and host tests pass, **Android unknown**. Preserve original user data, optional cheats/camera entries, and official ultrawide. Next test: enter fight, wait ~2sec, press Square, check `PLAYER ACTION CONFIRMED` and master/runtime log; stop after crash. [Report](../research/jin-lifecycle/incident-011-kiwiyu-zero-timer-v03-action-gate.md).
