@@ -146,15 +146,18 @@ static DirtyRange dirty_ranges[MAX_DIRTY_RANGES];
 static unsigned int dirty_count;
 static uint32_t dirty_min = MAX_GUEST, dirty_max;
 static int dirty_bulk, dirty_overflow;
+static unsigned int changed_writes;
 static void begin_dirty(int master) {
     dirty_count = 0;
     dirty_min = MAX_GUEST;
     dirty_max = 0;
     dirty_bulk = master;
     dirty_overflow = 0;
+    changed_writes = 0;
 }
 static void mark_dirty(uint32_t addr, uint32_t bytes) {
     if (!bytes || !range_ok(addr, bytes)) return;
+    changed_writes++;
     uint32_t end = addr + bytes;
     if (addr < dirty_min) dirty_min = addr;
     if (end > dirty_max) dirty_max = end;
@@ -515,7 +518,7 @@ static int loader_thread(SceSize args, void *argp) {
     (void)args; (void)argp;
     active_thread = 1;
     log_fd = sceIoOpen(LOG_PATH, PSP_O_WRONLY | PSP_O_CREAT | PSP_O_TRUNC, 0666);
-    note("KiwiYu Jin 1.0 standalone v0.1: two masters, 16ms runtime");
+    note("KiwiYu Jin 1.0 standalone v0.2: activation/write telemetry");
     SceUID safefd = sceIoOpen(SAFE_PATH, PSP_O_RDONLY, 0);
     if (safefd >= 0) {
         sceIoClose(safefd);
@@ -533,12 +536,14 @@ static int loader_thread(SceSize args, void *argp) {
     BattleClock clock;
     battle_clock_reset(&clock);
     int round_clock_logged = 0;
+    unsigned int round_wait_polls = 0;
     while (running) {
         uint32_t base = 0;
         if (!jin_fight_ready(&base)) {
             settle_ticks = 0;
             settle_base = 0;
             round_clock_logged = 0;
+            round_wait_polls = 0;
             battle_clock_reset(&clock);
             if (++idle_cycles > 40) { installed = 0; prior_base = 0; }
             sceKernelDelayThread(25000); continue;
@@ -548,6 +553,7 @@ static int loader_thread(SceSize args, void *argp) {
             settle_base = base;
             settle_ticks = 0;
             round_clock_logged = 0;
+            round_wait_polls = 0;
             battle_clock_reset(&clock);
             note("Jin move table candidate found; waiting for battle stability");
         }
@@ -565,10 +571,19 @@ static int loader_thread(SceSize args, void *argp) {
                 note("stable move table; waiting for active round timer (no writes yet)");
                 round_clock_logged = 1;
             }
-            if (!battle_clock_sample(&clock, getmem(ROUND_TIMER_ADDR, 4))) {
+            uint32_t round_value = getmem(ROUND_TIMER_ADDR, 4);
+            if (round_wait_polls == 0)
+                note_hex("round timer first sample = ", round_value);
+            if (!battle_clock_sample(&clock, round_value)) {
+                if (++round_wait_polls == 240u) {
+                    note_hex("round timer after ~6 seconds = ", round_value);
+                    note("NO MASTER WRITES: waiting for supported countdown");
+                    round_wait_polls = 0;
+                }
                 sceKernelDelayThread(25000);
                 continue;
             }
+            note_hex("round timer qualified at = ", round_value);
             note("ROUND TIMER ACTIVE: battle confirmed; master may initialize");
         }
         if (!installed || base != prior_base) {
@@ -624,6 +639,9 @@ static int loader_thread(SceSize args, void *argp) {
         }
         if (!logged_first_runtime) {
             note("first runtime pass completed");
+            note_hex("first runtime changed write operations = ", changed_writes);
+            if (!changed_writes)
+                note("WARNING: runtime made NO changes on first pass; check state and move mapping");
             logged_first_runtime = 1;
         }
         sceKernelDelayThread(16000);
