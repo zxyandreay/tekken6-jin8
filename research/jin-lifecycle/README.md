@@ -89,3 +89,7 @@ User observed partially working Jin8 animations but repeated stutters under v0.3
 ## Incident 003: v0.4 before-battle crash
 
 [Crash report and guarded v0.4.1](incident-003-v04-prematch-null-jump.md): PC `0x10`, RA `0x0893F4D8`, possible leftover auto-CWCheat conflict plus insufficient fight-load readiness. Needs Cheats OFF, v0.3 gate removed, cold boot, and `Jin8.log`. Existing source/master files remain unchanged.
+
+## Incident 004 — master completed, game immediately crashes
+
+[Incident 004](incident-004-v041-master-resume-crash.md): attached v0.4.1 Jin8.log proves master initialized two signatures and user_main resumed, then the crash screen reports PC=0x10/RA=0x0889691C. Master opcode audit and stale v0.3 cheat conflict documented. Compiled v0.4.2 guards duplicate initialization and records first runtime boundary. **No Android stability evidence yet.**

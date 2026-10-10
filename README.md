@@ -25,3 +25,7 @@ The public build workflow contains the PRX/manifest only. You need to provide yo
 ## Latest crash checkpoint (Incident 003)
 
 v0.4 crashed before the fight loaded with PC `0x00000010`, RA `0x0893F4D8`; its screenshot showed `Cheats: Y`. The older v0.3 zip installed two `_C1` auto cheat groups, so concurrent execution has **not been ruled out**. The new v0.4.1 standalone source requires a valid current-move pointer and a stable two-second fight-ready interval before initializing the original master. It still needs an Android test with **PPSSPP Cheats OFF**. See [incident investigation](research/jin-lifecycle/incident-003-v04-prematch-null-jump.md).
+
+## Incident 004 — v0.4.1 PC=0x10 immediately following master resume
+
+The supplied Jin8.log establishes successful master preflight, two expected memory signatures, and `user_main resumed` before the crash, while the screenshot still says `Cheats: Y`. Unchanged v0.3 auto `_C1` cheats may therefore still be active (not confirmed). The new v0.4.2 standalone guard refuses master writes when it sees the old auto-gate or already populated master signatures, and logs the first runtime pass. **It still requires testing with PPSSPP Cheats globally OFF and does not claim the crash is solved.** [Incident 004 analysis](research/jin-lifecycle/incident-004-v041-master-resume-crash.md).

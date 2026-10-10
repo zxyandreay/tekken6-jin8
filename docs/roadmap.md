@@ -76,3 +76,7 @@ The user reported partial custom Jin moves with stutters and still-missing custo
 ## Incident 003 (Oct 10) — before-fight v0.4 crash
 
 v0.4 bad execution address `PC=0x10`, RA `0x0893F4D8`, crash before fight; screenshot showed Cheats enabled despite v0.4 standalone requirement. v0.3's auto `_C1` master/runtime may remain in the shared INI and must be disabled for an uncontaminated next run. The v0.4 fight-ready predicate was also too weak. v0.4.1 adds current-move pointer validation and ~2-second stable fight condition. PSPSDK compilation passed; **Android success is not claimed**. See [incident 003](../research/jin-lifecycle/incident-003-v04-prematch-null-jump.md).
+
+## Incident 004 — v0.4.1 crash despite 2-second guard
+
+User's attached log ends at `user_main resumed` after master initialization, with screenshot `PC=0x10`, `RA=0x0889691C`, Cheats=Y. No proof that the later runtime didn't execute because v0.4.1 did not log its tick. Master parser source contains only types 0,2,E; audit details in [incident 004](../research/jin-lifecycle/incident-004-v041-master-resume-crash.md). v0.4.2 adds old v0.3 cheat gate / preinstalled payload conflict detection, first-runtime boundary logging, and ships same unaltered third-party payload. Compilation passed; no promise of Android stability. First priority is **one clean test with PPSSPP Cheats OFF**.

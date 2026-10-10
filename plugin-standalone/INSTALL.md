@@ -38,3 +38,7 @@ closed without applying master rather than risk damaging module execution.
 ## v0.4.1 critical test requirement
 
 **Before another test:** PPSSPP's last crash screen reported `Cheats: Y`. The rejected v0.3 ZIP installed `_C1 Jin8 Auto Master (One-Time)` and `_C1 Jin8 Auto Runtime (After Master)`. **Turn Cheats OFF entirely**, ensure old Jin8Gate PRX is disabled/removed, and cold boot. Running both old auto-cheats and standalone Jin8 can conflict. The guarded v0.4.1 waits for current-move pointer readiness and ~2 seconds of a stable Jin fight state before its master pass. If it crashes, stop and provide `Jin8.log`; do not keep blindly retrying. [Investigation](../research/jin-lifecycle/incident-003-v04-prematch-null-jump.md).
+
+## v0.4.2 — legacy conflict guard / first-runtime logging
+
+The v0.4.1 Android crash screen still showed `Cheats: Y`, and its `Jin8.log` ended after `user_main resumed`. **The new build detects the v0.3 auto-cheat gate or an already populated master and refuses an overlapping initialization**, logging `CONFLICT`. It also logs the start and completion of its first runtime pass. This does **not** establish that the PC=0x10 crash is fixed. For the next and only necessary control, globally disable PPSSPP's Cheats feature (not just individual groups) and remove older Jin8Gate. Cold boot with official ultrawide unchanged and send a fresh log if anything fails. [Incident details](../research/jin-lifecycle/incident-004-v041-master-resume-crash.md).
