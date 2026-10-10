@@ -45,3 +45,7 @@ Replace `39100` with the actual PPSSPP remote debugger port. The script is passi
 ## Interpretation policy
 
 Do not declare a pointer address proven by a single non-zero value. Compare multiple captured phases, stable repeated runs, other characters, and next-match reloads. If full mod cannot activate reliably, record failed steps and collect mod-disabled controls first.
+
+## Baseline completed
+
+The first `stock-menu` and `stock-jin-battle` captures are analyzed in [Experiment 001 results](experiment-001-results.md). Mod-enabled and pointer-target captures are still pending. Do not interpret nonzero pointer words as a confirmed move-table hook.
