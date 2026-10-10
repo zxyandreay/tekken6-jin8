@@ -49,3 +49,7 @@ Do not declare a pointer address proven by a single non-zero value. Compare mult
 ## Baseline completed
 
 The first `stock-menu` and `stock-jin-battle` captures are analyzed in [Experiment 001 results](experiment-001-results.md). Mod-enabled and pointer-target captures are still pending. Do not interpret nonzero pointer words as a confirmed move-table hook.
+
+## Second-stage bounded pointer capture
+
+Follow [remote debugging instructions](../../docs/development/remote-debugging.md#deep-pointer-window-follow-up). Re-capture stock and successfully modded Jin in the same match phase using `--inspect-pointers`, then compare. This is passive; the source mod must still be activated manually for the mod-side baseline.

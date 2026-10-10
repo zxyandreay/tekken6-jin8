@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // READ-ONLY and bounded: never performs memory writes, CPU pause/resume, or breakpoints.
 import fs from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import process from 'node:process';
 import { getEndpointArg, checkTcp, PPSSPPClient, verifyGame } from './lib/ppsspp-client.mjs';
@@ -61,7 +62,7 @@ async function captureBytes(client, address, size = 16) {
 async function main() {
   const argv = process.argv.slice(2);
   if (argv.includes('--help')) {
-    console.log('Usage: node tools/probes/capture-jin-state.mjs --endpoint HOST:PORT --label stock-jin-battle [--out captures/custom.json]');
+    console.log('Usage: node tools/probes/capture-jin-state.mjs --endpoint HOST:PORT --label stock-jin-battle [--out captures/custom.json] [--inspect-pointers]');
     return;
   }
   const url = getEndpointArg(argv);
@@ -70,6 +71,7 @@ async function main() {
     throw new Error('Provide --label of 1-64 letters, numbers, underscores, or hyphens.');
   }
   const output = option(argv, '--out') || path.join('captures', `${label}.json`);
+  const inspectPointers = argv.includes('--inspect-pointers');
   const client = new PPSSPPClient(url);
   try {
     await checkTcp(url);
@@ -99,10 +101,33 @@ async function main() {
     for (const addr of ULTRAWIDE_WORDS) data.ultrawideInstructionWords[hex(addr)] = await captureWord(client, addr, true);
     for (const [addr, name] of PAYLOAD_SAMPLES) data.payloadSamples[name] = await captureBytes(client, addr);
 
+    if (inspectPointers) {
+      data.pointerWindows = {};
+      // Only two selected pointer candidates; never recursively chase guest pointers.
+      for (const [name, size] of [
+        ['p1_moveset_pointer_candidate', 256],
+        ['current_move_pointer_candidate', 128],
+      ]) {
+        const candidate = data.candidateWords[name];
+        const value = candidate?.value ? Number.parseInt(candidate.value, 16) : NaN;
+        if (!Number.isInteger(value) || value === 0 || (value & 3) !== 0
+            || value < 0x08000000 || value > 0x0C000000 - size) {
+          data.pointerWindows[name] = { pointer: candidate?.value ?? null, skipped: 'null, unaligned or outside bounded guest range' };
+          continue;
+        }
+        const window = await captureBytes(client, value, size);
+        if (window.bytesHex) {
+          window.sha256 = createHash('sha256').update(Buffer.from(window.bytesHex, 'hex')).digest('hex');
+        }
+        data.pointerWindows[name] = { pointer: hex(value), ...window };
+      }
+    }
+
     await fs.mkdir(path.dirname(output), { recursive: true });
     await fs.writeFile(output, JSON.stringify(data, null, 2) + '\n', { flag: 'wx' });
     console.log(`SUCCESS: saved ${output}`);
     console.log('Candidate words:', JSON.stringify(data.candidateWords, null, 2));
+    if (inspectPointers) console.log('Pointer windows:', JSON.stringify(Object.fromEntries(Object.entries(data.pointerWindows).map(([k, v]) => [k, { pointer: v.pointer, sha256: v.sha256, error: v.error, skipped: v.skipped }])), null, 2));
     console.log('Read errors are recorded in JSON; do not treat them as proof of a bad game build.');
     console.log('No memory writes, breakpoints, or automatic pausing were performed.');
   } finally {

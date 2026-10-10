@@ -9,7 +9,7 @@ export function diffSnapshots(a, b) {
   if (a.schema !== 'jin8-snapshot-v1' || b.schema !== 'jin8-snapshot-v1') {
     throw new Error('Unrecognized snapshot schema. Expected jin8-snapshot-v1.');
   }
-  const sections = ['candidateWords', 'ultrawideInstructionWords', 'payloadSamples'];
+  const sections = ['candidateWords', 'ultrawideInstructionWords', 'payloadSamples', 'pointerWindows'];
   const differences = [];
   for (const section of sections) {
     const first = a[section] ?? {};
@@ -37,7 +37,7 @@ async function main() {
   console.log(`Comparing: ${a.label} (${a.capturedAt}) → ${b.label} (${b.capturedAt})`);
   const changes = diffSnapshots(a, b);
   for (const c of changes) {
-    const short = item => item?.value ?? item?.bytesHex ?? (`error: ${item?.error ?? 'missing'}`);
+    const short = item => item?.value ?? (item?.sha256 ? `${item.pointer ?? item.address} sha256:${item.sha256.slice(0, 16)} (${item.byteCount} bytes)` : item?.bytesHex ? `${item.address} ${item.bytesHex.slice(0, 48)}${item.bytesHex.length > 48 ? '...' : ''}` : `error: ${item?.error ?? item?.skipped ?? 'missing'}`);
     console.log(`${c.section}/${c.key}: ${short(c.before)} -> ${short(c.after)}`);
   }
   console.log(`Total changed probes: ${changes.length}. Unchanged does not imply equal gameplay behavior.`);

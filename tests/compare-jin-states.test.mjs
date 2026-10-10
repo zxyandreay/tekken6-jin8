@@ -13,3 +13,11 @@ test('detects word changes while ignoring timestamps', () => {
 test('rejects incompatible data', () => {
   assert.throws(() => diffSnapshots({ schema: 'wrong' }, { schema: 'jin8-snapshot-v1' }));
 });
+
+test('detects pointer-window changes without contacting PPSSPP', () => {
+  const a = { schema: 'jin8-snapshot-v1', pointerWindows: { move: { pointer: '0x087AD474', bytesHex: '0102', sha256: 'aaa' } } };
+  const b = { schema: 'jin8-snapshot-v1', pointerWindows: { move: { pointer: '0x087AD474', bytesHex: '0103', sha256: 'bbb' } } };
+  const diff = diffSnapshots(a, b);
+  assert.equal(diff.length, 1);
+  assert.equal(diff[0].section, 'pointerWindows');
+});

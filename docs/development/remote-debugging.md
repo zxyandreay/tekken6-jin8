@@ -48,3 +48,18 @@ After baseline snapshots verify stable pointers, write **targeted and bounded** 
 - Wrong game ID: launch Tekken 6 USA, not another region.
 - Invalid address: game hasn't allocated that state yet or memory layout differs.
 - No useful diff: take snapshots in the specified phases, and make sure the game is paused manually for fine-grained comparisons.
+
+## Deep pointer-window follow-up
+
+Experiment 001 identified two nonzero aligned candidate pointer values in an active stock Jin fight. The capture script now accepts `--inspect-pointers`: it performs no more than two additional bounded `memory.read` requests (256 bytes at the candidate moveset pointer and 128 bytes at the candidate current-move pointer). It validates alignment and guest-memory bounds first and will log read errors instead of forcing access.
+
+```powershell
+node tools/probes/capture-jin-state.mjs --endpoint 192.168.0.101:39100 --label stock-jin-battle-deep --inspect-pointers
+# Separate cold boot: use the original known-working mod activation before taking this:
+node tools/probes/capture-jin-state.mjs --endpoint 192.168.0.101:39100 --label mod-jin-battle-deep --inspect-pointers
+node tools/probes/compare-jin-states.mjs captures/stock-jin-battle-deep.json captures/mod-jin-battle-deep.json
+```
+
+The debugger endpoint is from the user's previous captures; adjust if it changes. These commands do not enable cheats or pause the CPU. When possible, pause manually in PPSSPP's debugger **after** entering the target fight before capturing; the returned CPU status will record whether it was paused. Move pointers may change between requests while running.
+
+Inspect the JSON under ignored `captures/` before sharing. The differences are descriptive and do not automatically identify pointer ownership, correct structure layout, or successful master activation.
