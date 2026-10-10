@@ -1,11 +1,9 @@
-name: Build experimental Jin8 PRX
+name: ARCHIVED - Rejected legacy Jin8 interpreter (do not distribute)
 
+# Intentionally disabled for automatic builds: the v0.1/v0.2 interpreter
+# crashed on Android, and the guarded follow-up exceeded its PRX footprint
+# limit. The supported experiment lives in build-jin8-lite.yml.
 on:
-  push:
-    paths:
-      - 'plugin/**'
-      - 'tools/build_jin8_resource.py'
-      - '.github/workflows/build-jin8-experimental.yml'
   workflow_dispatch:
 
 permissions:
