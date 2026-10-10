@@ -88,3 +88,7 @@ Confirmed v0.4.2 log through `first runtime pass completed`, followed by Android
 ## Incident 006 — v0.4.3 fails; stop speculative build cycle
 
 Android crash remains `PC=0x10`, new RA `0x08896988` even after batched extended RAM JIT invalidation, master signature checks, and first completed runtime pass. One controlled **Cheats OFF + master-only marker** test in the existing build is needed before further engineering. The EBOOT return-site instruction and source opcode mix are documented in [Incident 006](../research/jin-lifecycle/incident-006-v043-repeat-null-jump.md). Do not add arbitrary delays or claim a fix.
+
+## Incident 007 — v0.4.3 master-only / Cheats-OFF still crashes
+
+User turned PPSSPP Cheats completely OFF, requested `Jin8.masteronly`, and still reproduced `PC=0x10`, RA `0x088E78EC` before fight. Old v0.3 CWCheat conflict is not necessary for this run; Jin runtime is not expected to run but actual marker processing requires confirmation via **fresh `Jin8.log`** (not present in accessible attachments). Do not iterate the crashing full build or alter official ultrawide. See [Incident 007](../research/jin-lifecycle/incident-007-master-only-cheats-off.md).

@@ -101,3 +101,7 @@ User observed partially working Jin8 animations but repeated stutters under v0.3
 ## Incident 006: v0.4.3 still crashes
 
 [JITSync failed on-device](incident-006-v043-repeat-null-jump.md): attached `Jin8 (2).log` shows master JIT invalidation, initialization and first runtime pass complete before `PC=0x10` crash; RA now `0x08896988`. Stop proposing unverified fixes; try existing `Jin8.masteronly` mode with Cheats OFF once and use its outcome to isolate master vs runtime responsibility.
+
+## Incident 007 — Cheats OFF, master-only crash
+
+[Latest isolation evidence](incident-007-master-only-cheats-off.md): user reports `Jin8.masteronly` enabled, and screenshot confirms `Cheats: N`. Crash still has PC `0x10` and new RA `0x088E78EC`. The new master-only `Jin8.log` has not surfaced as an accessible attachment yet; do not substitute the older full-runtime log. Await log verification before another build.

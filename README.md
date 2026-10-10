@@ -37,3 +37,7 @@ The user supplied a crash PC `0x10`, RA `0x088C7B50`, and a Jin8.log proving `fi
 ## Incident 006 — v0.4.3 JIT fix did not prevent PC=0x10
 
 The user retested v0.4.3: `PC=0x00000010`, `RA=0x08896988`; `Jin8.log` confirms the master, JIT invalidation, and first runtime pass completed. The reported status still shows `Cheats: Y`. **Do not treat v0.4.3 as a stable fix.** Before creating another full plugin build, run the already-included **`Jin8.masteronly` diagnostic with Cheats globally OFF** to identify whether the crash requires runtime writes. See [Incident 006](research/jin-lifecycle/incident-006-v043-repeat-null-jump.md).
+
+## Incident 007 — master-only with Cheats globally OFF still crashes
+
+Confirmed screenshot: `Cheats: N`, Bad Execution Address PC `0x10`, RA `0x088E78EC`; user says the `Jin8.masteronly` marker was present. This removes the old enabled-v0.3-cheats hypothesis as a necessary cause. **Await the newly generated master-only `Jin8.log`** to verify the marker and crash boundary; it has not appeared in the accessible attachments yet. [Incident 007 report](research/jin-lifecycle/incident-007-master-only-cheats-off.md). No new unstable build published.
