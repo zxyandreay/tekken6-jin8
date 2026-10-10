@@ -135,3 +135,7 @@ User observed partially working Jin8 animations but repeated stutters under v0.3
 ## Incident 014 — first remote freeze trace, move 0x02AB
 
 [Uppercut freeze and GPU frame-flip evidence](incident-014-uppercut-02ab-remote-trace.md): P1 Jin stays at `0x02AB` for most of an 82s recording, user marker labels uppercut, GPU-stat timeouts and 0 FPS show a persistent stall. Read-only probe v2 prepared to examine whole actor-block progress / move descriptor before editing gameplay PRX. No real v2 capture yet.
+
+## Incident 015 — v2 uppercut state flatline and next CPU snapshot
+
+[Trace-derived diagnosis](incident-015-uppercut-v2-flatline-cpu-stall.md): uppercut move 0x02AB freezes all 1,344 P1 state bytes in 150 samples, starves emulated CPU ticks ~119×, with repeated frame-stat timeouts. The EBOOT contains a backward branch at PC hint 0x088C6160; paused GPR/backtrace evidence is required for attribution. CPU-pausing Windows snapshot utility privately delivered; no PRX changed.
