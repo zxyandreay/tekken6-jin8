@@ -131,3 +131,7 @@ User observed partially working Jin8 animations but repeated stutters under v0.3
 ## Incident 013 — official PPSSPP remote probe, no gameplay writes
 
 [Read-only remote debugger approach and previous log boundaries](incident-013-kiwiyu-readonly-remote-debugger.md). User's latest v0.4 still freezes on some moves despite one master initialization and small subsequent runtime writes. A Windows LAN recorder was created and simulated-protocol tested, with source and tests included in the **private conversation ZIP** rather than published to the repo. Await real device trace and user-marked failing moves before editing the PRX again.
+
+## Incident 014 — first remote freeze trace, move 0x02AB
+
+[Uppercut freeze and GPU frame-flip evidence](incident-014-uppercut-02ab-remote-trace.md): P1 Jin stays at `0x02AB` for most of an 82s recording, user marker labels uppercut, GPU-stat timeouts and 0 FPS show a persistent stall. Read-only probe v2 prepared to examine whole actor-block progress / move descriptor before editing gameplay PRX. No real v2 capture yet.
