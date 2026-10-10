@@ -127,3 +127,7 @@ User observed partially working Jin8 animations but repeated stutters under v0.3
 ## Incident 012: KiwiYu v0.3 runtime stutters, v0.4 bounded JIT and copy guard
 
 [Source-backed findings + v0.4 SmoothGuard](incident-012-v04-smoothguard.md): original 16 × 8.5MiB conditional snapshot copies, invalid-pointer sentinel, v0.3 blanket runtime JIT invalidation overflow, overly eager full-master reapplication, intentional cinematic camera/interpolation changes. v0.4 passes PSPDEV + host checks; exact user Android result remains pending.
+
+## Incident 013 — official PPSSPP remote probe, no gameplay writes
+
+[Read-only remote debugger approach and previous log boundaries](incident-013-kiwiyu-readonly-remote-debugger.md). User's latest v0.4 still freezes on some moves despite one master initialization and small subsequent runtime writes. A Windows LAN recorder was created and simulated-protocol tested, with source and tests included in the **private conversation ZIP** rather than published to the repo. Await real device trace and user-marked failing moves before editing the PRX again.
