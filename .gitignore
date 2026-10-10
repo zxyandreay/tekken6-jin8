@@ -1,0 +1,16 @@
+# Local probe captures and source game/mod data
+captures/
+artifacts/
+private/
+*.log
+*.ppdmp
+*.iso
+*.cso
+*.zso
+*.savestate
+*EBOOT*.BIN
+ULUS10466*.ini
+__pycache__/
+.pytest_cache/
+node_modules/
+.DS_Store
