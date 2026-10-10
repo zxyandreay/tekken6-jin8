@@ -17,3 +17,7 @@ The public PRX artifact excludes the user-supplied master/runtime bytes. A priva
 ## Previous attempts and unresolved work
 
 [v0.1/v0.2 crashes](research/jin-lifecycle/incident-001-android-crash-fonts.md) · [v0.3 gate and stutters](research/jin-lifecycle/incident-002-v02-crash-lite-v03.md) · [v0.4.3 master-only crash proof](research/jin-lifecycle/incident-007-master-only-cheats-off.md) · [Next diagnostics](docs/roadmap.md)
+
+## KiwiYu Jin 1.0 — separate experimental source (v0.1)
+
+The user supplied a different `Jin 1.0 by KiwiYu.zip` including two masters and one `JIN Moves` runtime, with a user-confirmed source Rage Art input `d/f+1+2`. A separate **`plugin-kiwiyu/`** PRX has been added, requiring **no native PPSSPP Cheats** and preserving the official ultrawide plugin unchanged. It supports the source's type-D conditions, uses the existing battle-clock safety gate and ~16ms runtime cadence, and has verified CI compilation; **Android success is still untested**. This does not replace the established v0.5 until accepted. [Full source comparison and test instructions](research/jin-lifecycle/experiment-009-kiwiyu-jin-10.md).

@@ -11,3 +11,7 @@ Do not enable optional _C0 groups for music, hazards, forced Rage, or Heat Meter
 For a test, turn off Cheats globally, enable only this KiwiYu plugin and the original ultrawide, cold boot, and enter a normal timed fight with Jin P1. Check KiwiYu.log for "both KiwiYu masters initialized (2 signatures)" and "first runtime pass completed". If a crash occurs, stop and share the log. Do not rerun the known crash repeatedly.
 
 This test build is not verified stable, cannot guarantee Rage Art execution, and the 7 MB master initialization can cause a battle-start pause.
+
+### Original source integrity
+
+`tools/build_kiwiyu_resource.py` requires exact verified source INI checksum and preserves the joined instruction line 799754 as two commands. No third-party source data was committed. [Comparison and hashes](../research/jin-lifecycle/experiment-009-kiwiyu-jin-10.md).

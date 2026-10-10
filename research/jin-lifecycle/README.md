@@ -111,3 +111,7 @@ User observed partially working Jin8 animations but repeated stutters under v0.3
 ## Incident 008 / v0.5 experimental build
 
 [Battle-clock-gated loader investigation](incident-008-v05-battle-clock.md): the verified master-only + Cheats OFF result motivated an independent round-timer-driven readiness check. v0.5 waits for actual decreasing Tekken 6 timer instead of patching as soon as pointers look valid. Fails closed if unsupported. PSP compilation and host unit tests pass; Android result pending.
+
+## Experiment 009: separate KiwiYu Jin 1.0 standalone source
+
+[New user-provided moveset examination and independent v0.1 plugin](experiment-009-kiwiyu-jin-10.md): 2 masters (874,002 instructions), 5,113 runtime, d/f+1+2 Rage Art user claim, source joined-record repair, extra type-D opcode support, 16ms cadence and creator unspecified extra plugins. Compiled but **not yet Android-tested**. The original Jin8 standalone and ultrawide remain unchanged.

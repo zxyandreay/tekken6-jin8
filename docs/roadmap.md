@@ -100,3 +100,7 @@ The exact master-only log has now been received and establishes completed master
 ## Incident 008 / Experiment 007 — v0.5 guarded after real battle timer starts
 
 After the verified Cheats-OFF master-only crash, v0.5 requires **documented round-timer address `0x090FBE4C` to decrease** repeatedly before master initialization. This replaces relying entirely on Jin's early-loaded move pointers and a 2-second settle. No confirmation = no memory writes (fail-closed). PSPDEV compile and standalone timer unit tests pass, but Android timing, stability, and smoothness remain unverified. The full user-original master/runtime data remain unchanged. The ultrawide official PRX remains untouched. [Experiment / artifacts](../research/jin-lifecycle/incident-008-v05-battle-clock.md).
+
+## KiwiYu experiment 009 — isolated Rage Art candidate
+
+An alternate user's supplied Jin 1.0 by KiwiYu source has 874,002 total master instructions and 5,113 runtime instructions (versus the prior 511,607 + 2,458), and needs type-D conditions and two distinct masters. Its guide specifies a 16ms refresh interval and unnamed plugins. The user's reported Rage Art input is d/f+1+2, still unverified in the PRX. Independent v0.1 plugin built successfully; require real-world stable round, confirmed master/runtime log, Rage Art animation and frame pacing before promotion. Source converter preserves one joined _L line as two records. Official ultrawide unaffected. [Experiment 009](../research/jin-lifecycle/experiment-009-kiwiyu-jin-10.md).
