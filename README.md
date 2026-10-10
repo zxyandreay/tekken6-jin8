@@ -1,6 +1,6 @@
 # Tekken 6 Jin8
 
-**Status: compiled experimental automatic PRX — real-device PPSSPP verification pending.** This repository contains a standalone PSP plugin to reproduce the user's existing Tekken 8-inspired Jin Kazama cheat **without manually toggling CWCheats**. It targets Tekken 6 USA (\`ULUS10466\`) on PPSSPP.
+**Status: experimental standalone PRX v0.2 — reported v0.1 Android crash and font-texture regression; v0.2 compiled, awaiting live device validation.** This repository contains a standalone PSP plugin to reproduce the user's existing Tekken 8-inspired Jin Kazama cheat **without manually toggling CWCheats**. It targets Tekken 6 USA (\`ULUS10466\`) on PPSSPP.
 
 ## Install the independent Jin8 plugin
 
@@ -81,3 +81,7 @@ Three of eight tested Jin runtime pointer destinations matched source-defined va
 ## Experiment 005 — cinematic source code confirmed active in capture
 
 The user's attack watch observed a brief **speed-mode 3 / zoom 16.0 / camera-rate 0.5** state matching the original Jin runtime's `SlowMo v2.3 Master` lines, while a separate attempted-slowmo watch recorded no such state. The nominal idle capture was confounded by an attacking CPU. See [Experiment 005 findings](research/jin-lifecycle/experiment-005-results.md) and the safer [focused event monitor](tools/probes/watch-jin-cinematics.mjs).
+
+## Incident 001: experimental Android crash and font replacement regression
+
+The v0.1 plugin caused a bad execution address on the user's PPSSPP Android build and affected custom text/font replacement textures. A safe footprint/cache-handling **v0.2 experimental PRX** has replaced the large runtime BSS with streaming and removes repeated global I-cache flushes. It remains unverified on-device. See [incident findings, PRX memory footprint measurements, and no-write fallback](research/jin-lifecycle/incident-001-android-crash-fonts.md). The official ultrawide release remains unchanged. **Do not use v0.1**.

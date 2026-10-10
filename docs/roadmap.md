@@ -58,3 +58,7 @@ Other regional game builds, gameplay networking guarantees, exact Tekken 8 engin
 ## October 10, 2026 — implementation checkpoint
 
 A **standalone experimental PSP PRX** has now been written, compiled in PSPDEV/PSPSDK CI and packaged with a manifest requesting `memory = 80`. It loads two binary streams converted locally from the exact source INI and attempts automatic master initialization plus periodic Jin runtime execution. This initial build remains **untested in real PPSSPP**; passing CI is a compiler/build check only. The official `tekken6-ultrawide` code, binary and release are unchanged. The next stage is to test a cold-boot fight with both Jin CWCheats disabled, verify `Jin8.log`, custom move availability, ultrawide aspect/HUD, replacement fonts/textures and fast-forward, then debug only observed implementation failures.
+
+## Incident 001 status — v0.1 rejected
+
+User reported a **Bad Execution Address** crash and loss of replacement custom font textures. The v0.1 mapped PRX size **0x6A08** greatly exceeded the accepted ultrawide PRX footprint **0x0EB0** and employed global JIT/cache invalidation in runtime loops. v0.2 reduces mapped size to **0x1DD8**, uses local code-cache invalidation and includes an opt-in no-write `Jin8.safe` diagnostic. v0.2 is compiled only; it must **not** be marked accepted until device validates Jin behavior, ultrawide preservation, text replacement, and no crashes. See [incident report](../research/jin-lifecycle/incident-001-android-crash-fonts.md).

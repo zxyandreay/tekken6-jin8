@@ -30,3 +30,7 @@ Reference: [zxyandreay/tekken6-ultrawide](https://github.com/zxyandreay/tekken6-
 - **Release gate**: no regressions in custom font/texture replacement, HUD, camera presets, fast-forward, or normal Jin move execution.
 
 Upstream reference is read-only. Reproducing techniques in this repository does not justify copying third-party assets or bypassing their licenses.
+
+## Incident 001: mapped PRX allocation may alter texture hashes
+
+Ultrawide accepted footprint is one `PT_LOAD` with `p_filesz=p_memsz=0x0EB0`; its historical test changed *only* the resident mapped size to `0x12D0` and reproduced missing replacement font/texture selections. The separate Jin8 v0.1 had `p_memsz=0x6A08`; v0.2 trims this to `0x1DD8`, still larger than the proven-safe ultrawide footprint. Treat coexistence as *untested* until verified on-device. Do not edit ultrawide official release. See [Jin8 incident](../../research/jin-lifecycle/incident-001-android-crash-fonts.md).
