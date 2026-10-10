@@ -1,0 +1,16 @@
+{
+  "name": "tekken6-jin8",
+  "version": "0.0.0-research",
+  "private": true,
+  "type": "module",
+  "description": "Read-only PPSSPP remote debugging tools for Tekken 6 Jin8 research",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "smoke": "node tools/probes/ppsspp-smoke.mjs",
+    "capture": "node tools/probes/capture-jin-state.mjs",
+    "compare": "node tools/probes/compare-jin-states.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
