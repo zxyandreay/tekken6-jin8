@@ -62,3 +62,7 @@ Research is currently scoped to `ULUS10466` and PPSSPP. Addresses and behavior m
 ## October 10 — master initialization evidence
 
 [Experiment 002 deep-capture report](research/jin-lifecycle/experiment-002-results.md) confirms direct-write signatures near the beginning and far end of the original master are present when modded Jin is active. The first deep stock/mod captures differed in ultrawide plugin loading, so they are not a controlled A/B. Next use the safe [11-signature probe](tools/probes/verify-master-payload.mjs) with a matched game/plugin configuration, and keep both output JSON files locally in ignored `captures/`.
+
+## Experiment 004 — runtime pointer writes
+
+Three of eight tested Jin runtime pointer destinations matched source-defined values in the modded fight, with the same three remaining matched across 20 samples. Stock Jin had no matches. The source explicitly supports both observed moveset pointer prefixes `0x086A` and `0x0875`. See [Experiment 004](research/jin-lifecycle/experiment-004-results.md). For move/condition correlation, use the **read-only** [move watch](tools/probes/watch-jin-move-conditions.mjs) instead of replaying the giant master repeatedly.

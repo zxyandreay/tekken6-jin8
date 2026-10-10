@@ -59,3 +59,7 @@ The first 256 bytes at `0x08754400` were unchanged between stock and mod snapsho
 The original `(1)jin` cheat repeatedly uses `_L 0x604078E0 <value>` followed by `_L 0x00020001 <offset>`. These are conditional CWCheat **32-bit pointer writes** based at live guest `[0x08C078E0]`, observed as `0x08754400`. For example, offset `0x0002C250` maps to destination **`0x08780650`**, and offset `0x000624D4` maps to **`0x087B68D4`**. Their target values can appear/disappear depending on the current move/other conditions. The unchanged first 256 bytes at `0x08754400` do not cover these writes. The new read-only probe inspects 8 exact offset destinations.
 
 Camera `0x0895350C` is a guest **instruction** and must use `memory.read` with `replacements:false`; earlier stock `memory.read_u32` value `0x682CE4C8` may have been a JIT/emuhack replacement. Static EBOOT word at this address is `0x3C013F80`. See [Experiment 003](../../research/jin-lifecycle/experiment-003-results.md).
+
+## Two observed moveset base variants
+
+Experiment 004 stock read `0x08754400`, mod read `0x086A8800`, shift `0x000ABC00` (703,488). Both `0x0875` and `0x086A` prefix checks occur as paired conditions within the original master and Jin runtime codes (99 per variant in master; 43 per variant in runtime). Treat base as dynamic, **never hardcode a single location**. A different base alone does not establish cheat-triggered relocation. See [Experiment 004](../../research/jin-lifecycle/experiment-004-results.md).

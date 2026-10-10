@@ -69,3 +69,7 @@ node tools/probes/verify-master-payload.mjs --endpoint 192.168.0.101:39100 --lab
 ## Experiment 003 (matched setup)
 
 [Findings](experiment-003-results.md): With ultrawide and expanded memory in both states, **0/11 stock vs 11/11 mod** signatures. Next compare runtime pointer targets with `trace-jin-runtime-links.mjs` and capture real known move triggers. The camera read now bypasses PPSSPP instruction replacements.
+
+## Experiment 004 checkpoint
+
+[Runtime pointer result](experiment-004-results.md): 3/8 source-defined custom links match after the mod, 20/20 stable for those three in attack sampling, 0/8 stock. Both `0x086A` and `0x0875` moveset prefixes are explicitly handled by the cheat. The next stage samples move ID and conditional link together with the new read-only watcher.

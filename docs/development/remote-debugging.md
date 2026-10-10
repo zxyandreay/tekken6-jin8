@@ -111,3 +111,17 @@ The CLI stores distinct JSON under ignored `captures/`. Never reuse a label alre
 **Camera probe correction:** `shared_camera_word` at `0x0895350C` is executable code; the snapshot tool now reads it via `memory.read` `replacements:false`, not `memory.read_u32`. The old stock read `0x682CE4C8` may be a JIT/emuhack replacement rather than an actual camera patch. This interpretation is pending a raw-code capture. Do not use that prior sample to claim a bug in ultrawide.
 
 Also see [Experiment 003 findings](../../research/jin-lifecycle/experiment-003-results.md).
+
+## Experiment 004: watch individual move conditions
+
+After observing three static custom pointer links with `trace-jin-runtime-links.mjs`, use the new **passive** `watch-jin-move-conditions.mjs` to correlate move IDs, input state, pointer-base changes, effect controllers, and conditional pointer destinations. It re-resolves the active table base each sampling cycle and flags changes during sequential reads.
+
+Run once in the already initialized modded Jin fight (no further master toggles):
+
+```powershell
+node tools/probes/watch-jin-move-conditions.mjs --endpoint 192.168.0.101:39100 --label jin8-move-one --samples 40 --interval-ms 200
+```
+
+Perform **one** reproducible move several times after the probe starts; note the input and whether zoom, slowdown, or a Tekken 8-looking animation occurs. The source specifically gates link commands on current move IDs `0x0266`, `0x043D`, and `0x02E3`; the source labels `0x043D` next to `// 1+2+3+4`. This is not proof the same input works in the current game state. Use a new label for a second move (e.g. `jin8-move-two`). The code never writes, freezes, or pauses gameplay. Its reads are sequential and may miss short-lived moves; a nonmatch is not conclusive.
+
+[Full Experiment 004 source comparison](../../research/jin-lifecycle/experiment-004-results.md).

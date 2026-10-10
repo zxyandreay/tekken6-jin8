@@ -14,3 +14,5 @@ When a hypothesis is demonstrated, update the canonical file in `docs/` and pres
 - [Experiment 002: deep stock vs mod results](jin-lifecycle/experiment-002-results.md) — first and late master signatures match; plugin confound pending.
 
 - [Experiment 003: matched payload + pointer-runtime hypothesis](jin-lifecycle/experiment-003-results.md) — 11/11 mod signatures and next read-only probe.
+
+- [Experiment 004: conditional runtime move links](jin-lifecycle/experiment-004-results.md) — three custom links observed, source supports two moveset base prefixes.

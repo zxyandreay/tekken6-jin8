@@ -12,3 +12,5 @@ Node.js 22+ is recommended. No npm install or PPSSPP binary modification is requ
 - `probes/verify-master-payload.mjs` — bounded read-only 11-anchor checksum probe across the user's original master (no mod data embedded). Use the same plugin/memory configuration for stock vs active-mod comparisons.
 
 - `probes/trace-jin-runtime-links.mjs` — read-only sampler of eight source-derived, conditional 0x6 pointer-write destination addresses; optional bounded repeat sampling (max 20 reads per address). No writes or breakpoints.
+
+- `probes/watch-jin-move-conditions.mjs` — bounded read-only move/event watcher (live moveset pointer resolution, move IDs, selected conditional links, camera/speed field samples). Max 80 snapshots; samples are sequential, not atomic.
