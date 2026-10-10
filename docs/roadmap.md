@@ -92,3 +92,7 @@ Android crash remains `PC=0x10`, new RA `0x08896988` even after batched extended
 ## Incident 007 — v0.4.3 master-only / Cheats-OFF still crashes
 
 User turned PPSSPP Cheats completely OFF, requested `Jin8.masteronly`, and still reproduced `PC=0x10`, RA `0x088E78EC` before fight. Old v0.3 CWCheat conflict is not necessary for this run; Jin runtime is not expected to run but actual marker processing requires confirmation via **fresh `Jin8.log`** (not present in accessible attachments). Do not iterate the crashing full build or alter official ultrawide. See [Incident 007](../research/jin-lifecycle/incident-007-master-only-cheats-off.md).
+
+### Incident 007 evidence update — log confirmed
+
+The exact master-only log has now been received and establishes completed master initialization and `user_main resumed` without Jin runtime execution. Global Cheats were OFF. Next effort: battle-ready-state detection plus native master write/condition parity; do not release another speculative full PRX or modify official ultrawide. [Full log and source audit](../research/jin-lifecycle/incident-007-master-only-cheats-off.md).

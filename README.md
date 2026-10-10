@@ -41,3 +41,5 @@ The user retested v0.4.3: `PC=0x00000010`, `RA=0x08896988`; `Jin8.log` confirms 
 ## Incident 007 — master-only with Cheats globally OFF still crashes
 
 Confirmed screenshot: `Cheats: N`, Bad Execution Address PC `0x10`, RA `0x088E78EC`; user says the `Jin8.masteronly` marker was present. This removes the old enabled-v0.3-cheats hypothesis as a necessary cause. **Await the newly generated master-only `Jin8.log`** to verify the marker and crash boundary; it has not appeared in the accessible attachments yet. [Incident 007 report](research/jin-lifecycle/incident-007-master-only-cheats-off.md). No new unstable build published.
+
+**Verified Incident 007 update:** User supplied master-only log showing `MASTER-ONLY diagnostic enabled`, `master initialized (2 signatures)`, and `user_main resumed` with Cheats globally OFF. This is a post-master-resume crash without Jin runtime; [investigation](research/jin-lifecycle/incident-007-master-only-cheats-off.md). v0.4.3 remains rejected as unstable. No new build until the source master application strategy is corrected.

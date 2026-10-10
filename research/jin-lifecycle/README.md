@@ -105,3 +105,5 @@ User observed partially working Jin8 animations but repeated stutters under v0.3
 ## Incident 007 — Cheats OFF, master-only crash
 
 [Latest isolation evidence](incident-007-master-only-cheats-off.md): user reports `Jin8.masteronly` enabled, and screenshot confirms `Cheats: N`. Crash still has PC `0x10` and new RA `0x088E78EC`. The new master-only `Jin8.log` has not surfaced as an accessible attachment yet; do not substitute the older full-runtime log. Await log verification before another build.
+
+**Update:** Received exact master-only `Jin8.log`: marker recognized, master preflight/invalidation/two signature checks completed, then `user_main resumed`; no runtime pass. With screenshot `Cheats:N`, this confirms the crash can occur *without the Jin runtime or global CWCheats*. [Verified Incident 007](incident-007-master-only-cheats-off.md).
