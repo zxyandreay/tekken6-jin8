@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include "battle_clock.h"
 
 PSP_MODULE_INFO("Tekken6Jin8", 0, 1, 0);
 PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER);
@@ -35,6 +36,8 @@ PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER);
 #define SAFE_PATH "ms0:/PSP/PLUGINS/Tekken6Jin8/Jin8.safe"
 #define CURRENT_MOVE_ADDR 0x08C07A18u
 #define CURRENT_MOVE_POINTER_ADDR 0x08C07964u
+/* Tekken 6 PSP CWCheat timer: _L 0x208FBE4C 0x00000E11 (60 sec). */
+#define ROUND_TIMER_ADDR 0x090FBE4Cu
 /* 80 consecutive samples at 25ms = ~2 seconds of stable fight state. */
 #define FIGHT_SETTLE_TICKS 80u
 #define MASTER_ONLY_PATH "ms0:/PSP/PLUGINS/Tekken6Jin8/Jin8.masteronly"
@@ -492,7 +495,7 @@ static int loader_thread(SceSize args, void *argp) {
     (void)args; (void)argp;
     active_thread = 1;
     log_fd = sceIoOpen(LOG_PATH, PSP_O_WRONLY | PSP_O_CREAT | PSP_O_TRUNC, 0666);
-    note("Tekken6Jin8 Standalone v0.4.3: batched full-range JIT invalidation");
+    note("Tekken6Jin8 Standalone v0.5: battle-clock-triggered master");
     SceUID safefd = sceIoOpen(SAFE_PATH, PSP_O_RDONLY, 0);
     if (safefd >= 0) {
         sceIoClose(safefd);
@@ -507,11 +510,16 @@ static int loader_thread(SceSize args, void *argp) {
     uint32_t prior_base = 0;
     uint32_t settle_base = 0;
     unsigned int settle_ticks = 0;
+    BattleClock clock;
+    battle_clock_reset(&clock);
+    int round_clock_logged = 0;
     while (running) {
         uint32_t base = 0;
         if (!jin_fight_ready(&base)) {
             settle_ticks = 0;
             settle_base = 0;
+            round_clock_logged = 0;
+            battle_clock_reset(&clock);
             if (++idle_cycles > 40) { installed = 0; prior_base = 0; }
             sceKernelDelayThread(25000); continue;
         }
@@ -519,6 +527,8 @@ static int loader_thread(SceSize args, void *argp) {
         if (settle_base != base) {
             settle_base = base;
             settle_ticks = 0;
+            round_clock_logged = 0;
+            battle_clock_reset(&clock);
             note("Jin move table candidate found; waiting for battle stability");
         }
         if (settle_ticks < FIGHT_SETTLE_TICKS) {
@@ -527,8 +537,22 @@ static int loader_thread(SceSize args, void *argp) {
             continue;
         }
         if (safe_mode) { sceKernelDelayThread(50000); continue; }
+        /* A current move ID can exist while the game is still loading.
+           Require the actual 60s round timer to count down in repeated
+           samples; otherwise NEVER modify the game. No manual cheat toggle. */
         if (!installed || base != prior_base) {
-            note("Jin battle stable for 2 seconds; checking master targets");
+            if (!round_clock_logged) {
+                note("stable move table; waiting for active round timer (no writes yet)");
+                round_clock_logged = 1;
+            }
+            if (!battle_clock_sample(&clock, getmem(ROUND_TIMER_ADDR, 4))) {
+                sceKernelDelayThread(25000);
+                continue;
+            }
+            note("ROUND TIMER ACTIVE: battle confirmed; master may initialize");
+        }
+        if (!installed || base != prior_base) {
+            note("battle timer progressed and fight stable; checking master targets");
             if (legacy_master_conflict()) {
                 note("Abort this fight; disable PPSSPP Cheats and remove old v0.3 INI");
                 while (running && jin_fight_ready(0)) sceKernelDelayThread(50000);
