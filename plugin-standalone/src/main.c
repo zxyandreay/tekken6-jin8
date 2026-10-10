@@ -39,6 +39,7 @@ PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER);
 #define FIGHT_SETTLE_TICKS 80u
 #define MASTER_ONLY_PATH "ms0:/PSP/PLUGINS/Tekken6Jin8/Jin8.masteronly"
 #define PROTECTED_MAX 28
+#define MAX_DIRTY_RANGES 128
 
 typedef struct { uint32_t a, b; } Line;
 typedef struct {
@@ -132,6 +133,52 @@ static int protect_loaded_modules(void) {
     return 1;
 }
 
+/* The built-in PPSSPP CWCheat engine invalidates JIT across all guest RAM.
+   v0.4.2 invalidated only 0x08800000..0x08A00000, missing executable payload.
+   Batch one master invalidation and record changed runtime addresses. */
+typedef struct { uint32_t start, end; } DirtyRange;
+static DirtyRange dirty_ranges[MAX_DIRTY_RANGES];
+static unsigned int dirty_count;
+static uint32_t dirty_min = MAX_GUEST, dirty_max;
+static int dirty_bulk, dirty_overflow;
+static void begin_dirty(int master) {
+    dirty_count = 0;
+    dirty_min = MAX_GUEST;
+    dirty_max = 0;
+    dirty_bulk = master;
+    dirty_overflow = 0;
+}
+static void mark_dirty(uint32_t addr, uint32_t bytes) {
+    if (!bytes || !range_ok(addr, bytes)) return;
+    uint32_t end = addr + bytes;
+    if (addr < dirty_min) dirty_min = addr;
+    if (end > dirty_max) dirty_max = end;
+    if (dirty_bulk || dirty_overflow) return;
+    if (dirty_count && addr <= dirty_ranges[dirty_count-1].end + 32u &&
+        end >= dirty_ranges[dirty_count-1].start) {
+        DirtyRange *last = &dirty_ranges[dirty_count-1];
+        if (addr < last->start) last->start = addr;
+        if (end > last->end) last->end = end;
+    } else if (dirty_count < MAX_DIRTY_RANGES) {
+        dirty_ranges[dirty_count].start = addr;
+        dirty_ranges[dirty_count].end = end;
+        dirty_count++;
+    } else dirty_overflow = 1;
+}
+static void flush_dirty(void) {
+    if (dirty_min >= dirty_max) return;
+    if (dirty_bulk || dirty_overflow) {
+        /* One deferred JIT invalidation over the touched master range. */
+        sceKernelIcacheInvalidateRange((const void *)(uintptr_t)dirty_min,
+                                      dirty_max - dirty_min);
+    } else {
+        for (unsigned int j = 0; j < dirty_count; ++j)
+            sceKernelIcacheInvalidateRange(
+                (const void *)(uintptr_t)dirty_ranges[j].start,
+                dirty_ranges[j].end - dirty_ranges[j].start);
+    }
+}
+
 static void setmem(uint32_t a, int size, uint32_t val) {
     if (!range_ok(a, size) || (a & (size - 1)) != 0) return;
     if (intersects_protected(a, (uint32_t)size)) { write_rejected = 1; return; }
@@ -143,10 +190,9 @@ static void setmem(uint32_t a, int size, uint32_t val) {
     if (size == 1) *(volatile uint8_t *)(uintptr_t)a = (uint8_t)val;
     else if (size == 2) *(volatile uint16_t *)(uintptr_t)a = (uint16_t)val;
     else *(volatile uint32_t *)(uintptr_t)a = val;
-    if (a >= 0x08800000u && a < 0x08A00000u) {
-        sceKernelDcacheWritebackInvalidateRange((const void *)(uintptr_t)a, (unsigned int)size);
-        sceKernelIcacheInvalidateRange((const void *)(uintptr_t)a, (unsigned int)size);
-    }
+    /* Emulated game code may be anywhere in expanded RAM; do not limit
+       cache coherency to the first 2 MiB as v0.4.2 did. */
+    mark_dirty(a, (uint32_t)size);
 }
 static int open_reader(Reader *r, const char *path, uint32_t expected) {
     char magic[8];
@@ -295,6 +341,7 @@ static int execute(Stream *s) {
             uint32_t to = cwaddr(y.a);
             if (b && b < 24u * 1024u * 1024u && range_ok(a, b) && range_ok(to, b) && !intersects_protected(to, b)) {
                 memmove((void *)(uintptr_t)to, (const void *)(uintptr_t)a, b);
+                mark_dirty(to, b);
             }
             break;
         }
@@ -329,6 +376,7 @@ static int execute(Stream *s) {
                     if (val && val < 24u * 1024u * 1024u &&
                         range_ok(src, val) && range_ok(dst, val) && !intersects_protected(dst, val)) {
                         memmove((void *)(uintptr_t)dst, (const void *)(uintptr_t)src, val);
+                        mark_dirty(dst, val);
                     }
                     mode = -1;
                 }
@@ -381,7 +429,10 @@ static int execute_runtime(void) {
     memset(&stream, 0, sizeof(stream));
     stream.data = cached_runtime;
     stream.count = RUNTIME_LINES;
-    return execute(&stream);
+    begin_dirty(0);
+    int result = execute(&stream);
+    flush_dirty();
+    return result;
 }
 /* The rejected v0.3 ZIP enables legacy auto-cheats by default.
  * If the old gate or master payload is present before our own initialization,
@@ -409,9 +460,12 @@ static int load_master(void) {
     Stream stream;
     memset(&stream, 0, sizeof(stream));
     stream.reader = &rd;
+    begin_dirty(1);
     int result = execute(&stream);
+    flush_dirty();
     close_reader(&rd);
     if (!result) { note("master execution aborted"); return 0; }
+    note("master JIT invalidation completed");
     if (getmem(MASTER_MARK, 4) != MASTER_FIRST ||
         getmem(MASTER_LAST, 4) != MASTER_LAST_VAL) {
         note("master signatures not present - skip runtime"); return 0;
@@ -438,7 +492,7 @@ static int loader_thread(SceSize args, void *argp) {
     (void)args; (void)argp;
     active_thread = 1;
     log_fd = sceIoOpen(LOG_PATH, PSP_O_WRONLY | PSP_O_CREAT | PSP_O_TRUNC, 0666);
-    note("Tekken6Jin8 Standalone v0.4.2: fail-closed legacy conflict detection");
+    note("Tekken6Jin8 Standalone v0.4.3: batched full-range JIT invalidation");
     SceUID safefd = sceIoOpen(SAFE_PATH, PSP_O_RDONLY, 0);
     if (safefd >= 0) {
         sceIoClose(safefd);
