@@ -33,6 +33,9 @@ PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER);
 #define BLOCK_WORDS 512
 #define SAFE_PATH "ms0:/PSP/PLUGINS/Tekken6Jin8/Jin8.safe"
 #define CURRENT_MOVE_ADDR 0x08C07A18u
+#define CURRENT_MOVE_POINTER_ADDR 0x08C07964u
+/* 80 consecutive samples at 25ms = ~2 seconds of stable fight state. */
+#define FIGHT_SETTLE_TICKS 80u
 #define MASTER_ONLY_PATH "ms0:/PSP/PLUGINS/Tekken6Jin8/Jin8.masteronly"
 #define PROTECTED_MAX 28
 
@@ -403,6 +406,12 @@ static int jin_fight_ready(uint32_t *moveset) {
     if ((ptr & 0xFFFF0000u) != 0x086A0000u &&
         (ptr & 0xFFFF0000u) != 0x08750000u) return 0;
     if ((ptr & 3u) || !range_ok(ptr, 512)) return 0;
+    /* Character-select can already have character ID and moveset pointer;
+       wait for a meaningful battle current-move pointer before injecting. */
+    uint32_t active = getmem(CURRENT_MOVE_POINTER_ADDR, 4);
+    if ((active & 3u) || active < 0x08600000u ||
+        active >= 0x09C00000u || !range_ok(active, 128)) return 0;
+    if (getmem(CURRENT_MOVE_ADDR, 4) == 0u) return 0;
     if (moveset) *moveset = ptr;
     return 1;
 }
@@ -410,7 +419,7 @@ static int loader_thread(SceSize args, void *argp) {
     (void)args; (void)argp;
     active_thread = 1;
     log_fd = sceIoOpen(LOG_PATH, PSP_O_WRONLY | PSP_O_CREAT | PSP_O_TRUNC, 0666);
-    note("Tekken6Jin8 Standalone v0.4: master once, runtime cached");
+    note("Tekken6Jin8 Standalone v0.4.1: guarded fight entry");
     SceUID safefd = sceIoOpen(SAFE_PATH, PSP_O_RDONLY, 0);
     if (safefd >= 0) {
         sceIoClose(safefd);
@@ -423,21 +432,30 @@ static int loader_thread(SceSize args, void *argp) {
     if (!safe_mode && !protect_loaded_modules()) goto done;
     int installed = 0, idle_cycles = 0;
     uint32_t prior_base = 0;
+    uint32_t settle_base = 0;
+    unsigned int settle_ticks = 0;
     while (running) {
         uint32_t base = 0;
         if (!jin_fight_ready(&base)) {
+            settle_ticks = 0;
+            settle_base = 0;
             if (++idle_cycles > 40) { installed = 0; prior_base = 0; }
             sceKernelDelayThread(25000); continue;
         }
         idle_cycles = 0;
+        if (settle_base != base) {
+            settle_base = base;
+            settle_ticks = 0;
+            note("Jin move table candidate found; waiting for battle stability");
+        }
+        if (settle_ticks < FIGHT_SETTLE_TICKS) {
+            ++settle_ticks;
+            sceKernelDelayThread(25000);
+            continue;
+        }
         if (safe_mode) { sceKernelDelayThread(50000); continue; }
         if (!installed || base != prior_base) {
-            /* Make sure the player's active move/state has initialized; avoid
-               patching the engine during level and character allocations. */
-            if (getmem(CURRENT_MOVE_ADDR, 4) == 0) {
-                sceKernelDelayThread(25000); continue;
-            }
-            note("Jin fight detected; inspecting master targets");
+            note("Jin battle stable for 2 seconds; checking master targets");
             if (!preflight_master()) {
                 note("master preflight refused unsafe write, no initialization attempted");
                 while (running && jin_fight_ready(0)) sceKernelDelayThread(50000);
