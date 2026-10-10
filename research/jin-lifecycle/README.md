@@ -93,3 +93,7 @@ User observed partially working Jin8 animations but repeated stutters under v0.3
 ## Incident 004 — master completed, game immediately crashes
 
 [Incident 004](incident-004-v041-master-resume-crash.md): attached v0.4.1 Jin8.log proves master initialized two signatures and user_main resumed, then the crash screen reports PC=0x10/RA=0x0889691C. Master opcode audit and stale v0.3 cheat conflict documented. Compiled v0.4.2 guards duplicate initialization and records first runtime boundary. **No Android stability evidence yet.**
+
+## Incident 005: incomplete JIT write coverage in custom interpreter
+
+[Incident 005](incident-005-v042-jit-coverage.md): user log shows master and first runtime completed in v0.4.2, then PC `0x10` crash; host CWCheat comparison found the PRX failed to invalidate guest JIT outside the first 2 MiB and across memcopies. v0.4.3 batches all-range writes. Android result unknown.

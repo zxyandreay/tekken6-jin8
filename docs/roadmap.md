@@ -80,3 +80,7 @@ v0.4 bad execution address `PC=0x10`, RA `0x0893F4D8`, crash before fight; scree
 ## Incident 004 — v0.4.1 crash despite 2-second guard
 
 User's attached log ends at `user_main resumed` after master initialization, with screenshot `PC=0x10`, `RA=0x0889691C`, Cheats=Y. No proof that the later runtime didn't execute because v0.4.1 did not log its tick. Master parser source contains only types 0,2,E; audit details in [incident 004](../research/jin-lifecycle/incident-004-v041-master-resume-crash.md). v0.4.2 adds old v0.3 cheat gate / preinstalled payload conflict detection, first-runtime boundary logging, and ships same unaltered third-party payload. Compilation passed; no promise of Android stability. First priority is **one clean test with PPSSPP Cheats OFF**.
+
+## Incident 005 — v0.4.2 finishes first runtime pass, invalid jump persists
+
+Confirmed v0.4.2 log through `first runtime pass completed`, followed by Android PC `0x00000010` / RA `0x088C7B50`, `Cheats: Y` status. PPSSPP-native CWCheat invalidates host JIT for writes across memory, while our PRX only covered the first 2 MiB. v0.4.3 collects and flushes all changed master/runtime ranges, including memcopy destinations; compiles with PSPSDK. Next test requires Cheats OFF; optional master-only diagnostic marker isolates master vs runtime. [Incident 005](../research/jin-lifecycle/incident-005-v042-jit-coverage.md).

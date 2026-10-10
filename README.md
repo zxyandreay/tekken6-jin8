@@ -29,3 +29,7 @@ v0.4 crashed before the fight loaded with PC `0x00000010`, RA `0x0893F4D8`; its 
 ## Incident 004 — v0.4.1 PC=0x10 immediately following master resume
 
 The supplied Jin8.log establishes successful master preflight, two expected memory signatures, and `user_main resumed` before the crash, while the screenshot still says `Cheats: Y`. Unchanged v0.3 auto `_C1` cheats may therefore still be active (not confirmed). The new v0.4.2 standalone guard refuses master writes when it sees the old auto-gate or already populated master signatures, and logs the first runtime pass. **It still requires testing with PPSSPP Cheats globally OFF and does not claim the crash is solved.** [Incident 004 analysis](research/jin-lifecycle/incident-004-v041-master-resume-crash.md).
+
+## Incident 005 — v0.4.2 first runtime completes but PC=0x10 persists
+
+The user supplied a crash PC `0x10`, RA `0x088C7B50`, and a Jin8.log proving `first runtime pass completed`. A PPSSPP source comparison found a concrete mismatch: our standalone PRX previously invalidated its JIT only for memory writes in `0x08800000..0x08A00000`, missing extended-RAM payload and memcopy destinations. v0.4.3 batches guest JIT invalidation across **all changed addresses**. This is **a compiled test fix, not yet an Android-verified crash resolution**. Keep Cheats globally OFF. See [Incident 005](research/jin-lifecycle/incident-005-v042-jit-coverage.md).

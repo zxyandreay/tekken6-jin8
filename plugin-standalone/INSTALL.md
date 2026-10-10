@@ -42,3 +42,9 @@ closed without applying master rather than risk damaging module execution.
 ## v0.4.2 — legacy conflict guard / first-runtime logging
 
 The v0.4.1 Android crash screen still showed `Cheats: Y`, and its `Jin8.log` ended after `user_main resumed`. **The new build detects the v0.3 auto-cheat gate or an already populated master and refuses an overlapping initialization**, logging `CONFLICT`. It also logs the start and completion of its first runtime pass. This does **not** establish that the PC=0x10 crash is fixed. For the next and only necessary control, globally disable PPSSPP's Cheats feature (not just individual groups) and remove older Jin8Gate. Cold boot with official ultrawide unchanged and send a fresh log if anything fails. [Incident details](../research/jin-lifecycle/incident-004-v041-master-resume-crash.md).
+
+## v0.4.3 — JIT range coherence and master-only diagnostic
+
+v0.4.2 crashed even after logging `first runtime pass completed`. The separate PRX previously invalidated only the first 2 MiB of guest user RAM, whereas PPSSPP native CWCheat invalidates code caches for writes throughout memory. The new v0.4.3 batches all changed master targets and runtime/memcpy writes and invalidates guest JIT accordingly. **The fix is compiled but not verified on Android**; the official ultrawide PRX/manifest are unchanged and the original data is unchanged.
+
+Turn global PPSSPP Cheats OFF and remove `Tekken6Jin8Gate` before testing. For one optional diagnostic after a crash, create empty `PSP/PLUGINS/Tekken6Jin8/Jin8.masteronly`, cold boot: the master loads but the runtime is skipped. This is not a playable final mode. Remove this marker after testing. See [Incident 005](../research/jin-lifecycle/incident-005-v042-jit-coverage.md).
