@@ -60,7 +60,7 @@ def convert(archive: Path, out: Path) -> dict:
             "bytes": target.stat().st_size,
             "sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
         }
-    (out / "PAYLOAD-MANIFEST.json").write_text(json.dumps(result, indent=2) + "\\n")
+    (out / "PAYLOAD-MANIFEST.json").write_text(json.dumps(result, indent=2) + "\n")
     return result
 
 
