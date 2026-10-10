@@ -73,3 +73,7 @@ node tools/probes/verify-master-payload.mjs --endpoint 192.168.0.101:39100 --lab
 ## Experiment 004 checkpoint
 
 [Runtime pointer result](experiment-004-results.md): 3/8 source-defined custom links match after the mod, 20/20 stable for those three in attack sampling, 0/8 stock. Both `0x086A` and `0x0875` moveset prefixes are explicitly handled by the cheat. The next stage samples move ID and conditional link together with the new read-only watcher.
+
+## Experiment 005 checkpoint
+
+[Three watcher captures analyzed](experiment-005-results.md). P2 was attacking during nominal idle, so it is not a stationary control. Three custom links persist across 100/100 samples. A genuine source-matching **speed mode 3 / zoom 16.0 / camera rate 0.5** window appeared in the attack capture, despite the user not perceiving SlowMo. Next reduce P2 interference and test the read-only focused cinematic monitor.

@@ -125,3 +125,16 @@ node tools/probes/watch-jin-move-conditions.mjs --endpoint 192.168.0.101:39100 -
 Perform **one** reproducible move several times after the probe starts; note the input and whether zoom, slowdown, or a Tekken 8-looking animation occurs. The source specifically gates link commands on current move IDs `0x0266`, `0x043D`, and `0x02E3`; the source labels `0x043D` next to `// 1+2+3+4`. This is not proof the same input works in the current game state. Use a new label for a second move (e.g. `jin8-move-two`). The code never writes, freezes, or pauses gameplay. Its reads are sequential and may miss short-lived moves; a nonmatch is not conclusive.
 
 [Full Experiment 004 source comparison](../../research/jin-lifecycle/experiment-004-results.md).
+
+## Experiment 005: focused cinematic event monitor
+
+The earlier move watcher took roughly **0.5–0.6 s per complete sample** despite a `--interval-ms 200` setting. One attack capture nonetheless observed an exact speed/zoom/camera-rate combination found in the original `(1)jin` SlowMo source. The user reported P2 attacks during idle and could not deliberately reproduce slow-motion. See [Experiment 005](../../research/jin-lifecycle/experiment-005-results.md).
+
+For the next attempt prefer **Practice**, with P2 set to **stand still/do nothing**, rather than an attacking CPU. Avoid assuming a saved `slowmo` filename proves an event occurred. Once modded Jin is initialized, run a limited read-only control and one known deliberate attack:
+
+```powershell
+node tools/probes/watch-jin-cinematics.mjs --endpoint 192.168.0.101:39100 --label jin8-practice-no-input --samples 60 --interval-ms 100
+node tools/probes/watch-jin-cinematics.mjs --endpoint 192.168.0.101:39100 --label jin8-practice-one-attack --samples 80 --interval-ms 100 --after-detection 8
+```
+
+If a trigger is seen, the monitor captures post-event samples and exits; otherwise it uses the whole requested bounded window. It reads nine fixed known addresses only; no writes, breakpoints, or CPU changes. It flags **speed mode 3 or zoom below 40** as *diagnostic candidates*, not proof of visibly slowed gameplay. Keep the opponent and input conditions documented. No need to deliberately recreate slow-motion repeatedly or re-run the huge master to collect a triggered event.

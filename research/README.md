@@ -16,3 +16,5 @@ When a hypothesis is demonstrated, update the canonical file in `docs/` and pres
 - [Experiment 003: matched payload + pointer-runtime hypothesis](jin-lifecycle/experiment-003-results.md) — 11/11 mod signatures and next read-only probe.
 
 - [Experiment 004: conditional runtime move links](jin-lifecycle/experiment-004-results.md) — three custom links observed, source supports two moveset base prefixes.
+
+- [Experiment 005: cinematic-state event](jin-lifecycle/experiment-005-results.md) — speed mode 3 and zoom 16.0 match original SlowMo cheat; P2 interference documented.

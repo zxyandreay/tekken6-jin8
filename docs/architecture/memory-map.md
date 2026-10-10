@@ -63,3 +63,7 @@ Camera `0x0895350C` is a guest **instruction** and must use `memory.read` with `
 ## Two observed moveset base variants
 
 Experiment 004 stock read `0x08754400`, mod read `0x086A8800`, shift `0x000ABC00` (703,488). Both `0x0875` and `0x086A` prefix checks occur as paired conditions within the original master and Jin runtime codes (99 per variant in master; 43 per variant in runtime). Treat base as dynamic, **never hardcode a single location**. A different base alone does not establish cheat-triggered relocation. See [Experiment 004](../../research/jin-lifecycle/experiment-004-results.md).
+
+## Cinematic source writes verified in Experiment 005
+
+During an attack capture, speed-mode guest word `0x08C52890` became `0x00000003` for three consecutive sampled windows, and camera values at `0x08D6F270` (0.5) and `0x08D6F224` (16.0) matched the original Jin source `SlowMo v2.3 Master` lines **514435–437** simultaneously. This is direct memory evidence that a cinematic state matching source cheat values was active; not yet proof of which move or P2 action triggered it. The raw camera instruction `0x0895350C` was `0x3C013F80` in all three captures (100 samples total). See [Experiment 005](../../research/jin-lifecycle/experiment-005-results.md).

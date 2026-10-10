@@ -66,3 +66,7 @@ Research is currently scoped to `ULUS10466` and PPSSPP. Addresses and behavior m
 ## Experiment 004 — runtime pointer writes
 
 Three of eight tested Jin runtime pointer destinations matched source-defined values in the modded fight, with the same three remaining matched across 20 samples. Stock Jin had no matches. The source explicitly supports both observed moveset pointer prefixes `0x086A` and `0x0875`. See [Experiment 004](research/jin-lifecycle/experiment-004-results.md). For move/condition correlation, use the **read-only** [move watch](tools/probes/watch-jin-move-conditions.mjs) instead of replaying the giant master repeatedly.
+
+## Experiment 005 — cinematic source code confirmed active in capture
+
+The user's attack watch observed a brief **speed-mode 3 / zoom 16.0 / camera-rate 0.5** state matching the original Jin runtime's `SlowMo v2.3 Master` lines, while a separate attempted-slowmo watch recorded no such state. The nominal idle capture was confounded by an attacking CPU. See [Experiment 005 findings](research/jin-lifecycle/experiment-005-results.md) and the safer [focused event monitor](tools/probes/watch-jin-cinematics.mjs).

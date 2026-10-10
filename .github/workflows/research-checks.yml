@@ -32,11 +32,14 @@ jobs:
           node --check tools/probes/lib/jin-runtime-links.mjs
           node --check tools/probes/trace-jin-runtime-links.mjs
           node --check tools/probes/watch-jin-move-conditions.mjs
+          node --check tools/probes/lib/cinematic-events.mjs
+          node --check tools/probes/watch-jin-cinematics.mjs
       - name: Verify research CLI loads
         run: |
           node tools/probes/verify-master-payload.mjs --help
           node tools/probes/trace-jin-runtime-links.mjs --help
           node tools/probes/watch-jin-move-conditions.mjs --help
+          node tools/probes/watch-jin-cinematics.mjs --help
       - name: Unit tests (Node)
         run: npm test
       - name: Unit tests (Python)
