@@ -115,3 +115,7 @@ User observed partially working Jin8 animations but repeated stutters under v0.3
 ## Experiment 009: separate KiwiYu Jin 1.0 standalone source
 
 [New user-provided moveset examination and independent v0.1 plugin](experiment-009-kiwiyu-jin-10.md): 2 masters (874,002 instructions), 5,113 runtime, d/f+1+2 Rage Art user claim, source joined-record repair, extra type-D opcode support, 16ms cadence and creator unspecified extra plugins. Compiled but **not yet Android-tested**. The original Jin8 standalone and ultrawide remain unchanged.
+
+## Experiment 010 — KiwiYu v0.2 optional cheat package and telemetry
+
+[Status and compatibility findings](experiment-010-kiwiyu-v02-options-and-activation.md): original KiwiYu v0.1 appears stock to user; v0.2 logs timer gate and actual runtime changed writes. Four KiwiYu optional groups + four ultrawide camera presets retained as `_C0` without duplicated core cheat engine. Camera address collision discovered. Full user-specific ZIP verified; Android functional test still pending.

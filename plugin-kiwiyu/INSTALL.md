@@ -15,3 +15,9 @@ This test build is not verified stable, cannot guarantee Rage Art execution, and
 ### Original source integrity
 
 `tools/build_kiwiyu_resource.py` requires exact verified source INI checksum and preserves the joined instruction line 799754 as two commands. No third-party source data was committed. [Comparison and hashes](../research/jin-lifecycle/experiment-009-kiwiyu-jin-10.md).
+
+## v0.2 activation diagnostics + optional cheat pack
+
+v0.1 was reported by the user to look like default Jin; it has **not** been confirmed to initialize the converted moveset on Android. The v0.2 PRX adds raw battle timer samples and the count of changed first-pass runtime memory writes. The first match should be tested with PPSSPP Cheats OFF and **no optional camera presets enabled**. If moves stay unchanged, obtain `PSP/PLUGINS/Tekken6JinKiwiYu/KiwiYu.log` and check whether it logged `ROUND TIMER ACTIVE`, `both KiwiYu masters initialized`, and `first runtime changed write operations`.
+
+The user-specific ZIP additionally includes `PSP/Cheats/ULUS10466.ini` with all four original KiwiYu optional groups plus all four **exact original ultrawide camera presets**, all disabled (`_C0`). The file **overwrites any existing cheat INI upon extraction**. Back up and merge existing custom cheats before installing. Optional cheats require enabling global Cheats; **do not re-enable original JIN Moves / master cheats alongside the PRX**. Heat Meter requires Alboss textures. Choose at most one camera preset and be aware that KiwiYu runtime also writes the camera instruction at `0x0895350C` (17 original instructions), so Rage Art camera effects may conflict. [Audit](../research/jin-lifecycle/experiment-010-kiwiyu-v02-options-and-activation.md).

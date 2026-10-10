@@ -104,3 +104,7 @@ After the verified Cheats-OFF master-only crash, v0.5 requires **documented roun
 ## KiwiYu experiment 009 — isolated Rage Art candidate
 
 An alternate user's supplied Jin 1.0 by KiwiYu source has 874,002 total master instructions and 5,113 runtime instructions (versus the prior 511,607 + 2,458), and needs type-D conditions and two distinct masters. Its guide specifies a 16ms refresh interval and unnamed plugins. The user's reported Rage Art input is d/f+1+2, still unverified in the PRX. Independent v0.1 plugin built successfully; require real-world stable round, confirmed master/runtime log, Rage Art animation and frame pacing before promotion. Source converter preserves one joined _L line as two records. Official ultrawide unaffected. [Experiment 009](../research/jin-lifecycle/experiment-009-kiwiyu-jin-10.md).
+
+## Experiment 010 — KiwiYu v0.2 actual write diagnostic + optional packs
+
+v0.1 reported visually stock despite build success; without KiwiYu.log cannot know whether gate, master or runtime failed. Added first/periodic round timer logging and first runtime changed-write count in v0.2. User-owned optional source has four distinct _C0 groups, combined with four exact ultrawide camera presets all _C0 (off). Found 17 Kiwi runtime writes to same camera address 0x0895350C, so camera cheat cinematic compatibility not guaranteed. Core PRX independent of Cheats; optional groups need Cheats ON. No source master bytes published; ultrawide unchanged. [Experiment 010](../research/jin-lifecycle/experiment-010-kiwiyu-v02-options-and-activation.md).

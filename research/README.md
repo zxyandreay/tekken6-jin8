@@ -34,3 +34,5 @@ When a hypothesis is demonstrated, update the canonical file in `docs/` and pres
 - [Incident 008: v0.5 countdown-triggered standalone loader](jin-lifecycle/incident-008-v05-battle-clock.md) — user crash evidence, implementation, build and remaining tests.
 
 - [Experiment 009: KiwiYu Jin 1.0 alternate Rage Art source](jin-lifecycle/experiment-009-kiwiyu-jin-10.md) — distinct master/runtime groups, byte-preserving converter, independent experimental PRX.
+
+- [Experiment 010: KiwiYu v0.2 activation log and optional cheats / Ultrawide camera interaction](jin-lifecycle/experiment-010-kiwiyu-v02-options-and-activation.md).
