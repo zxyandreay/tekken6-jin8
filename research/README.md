@@ -22,3 +22,5 @@ When a hypothesis is demonstrated, update the canonical file in `docs/` and pres
 - [Incident 002: v0.2 Jin fight crash; v0.3 native-cheat lightweight gate](jin-lifecycle/incident-002-v02-crash-lite-v03.md) — custom font regression and new implementation test.
 
 - [Experiment 006: v0.4 fully standalone no-Cheats gameplay optimization](jin-lifecycle/experiment-006-v04-standalone-optimization.md) — source, benchmarks/footprints, caveats and test plan.
+
+- [Incident 003: v0.4 prematch PC=0x10 crash and guarded v0.4.1](jin-lifecycle/incident-003-v04-prematch-null-jump.md).

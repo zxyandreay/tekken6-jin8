@@ -85,3 +85,7 @@ v0.1 crashed and altered texture-font replacement selection; v0.2 reduced reside
 ## Experiment 006 / gameplay-first standalone pivot
 
 User observed partially working Jin8 animations but repeated stutters under v0.3; explicitly rejected any implementation requiring Cheats enabled. [v0.4 standalone optimization report](experiment-006-v04-standalone-optimization.md): cache runtime once, master only once under protected fight transition; no PPSSPP Cheats dependence. Font regressions deferred. The new PRX builds but requires an Android test before being considered stable.
+
+## Incident 003: v0.4 before-battle crash
+
+[Crash report and guarded v0.4.1](incident-003-v04-prematch-null-jump.md): PC `0x10`, RA `0x0893F4D8`, possible leftover auto-CWCheat conflict plus insufficient fight-load readiness. Needs Cheats OFF, v0.3 gate removed, cold boot, and `Jin8.log`. Existing source/master files remain unchanged.

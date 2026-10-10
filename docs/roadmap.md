@@ -72,3 +72,7 @@ The recommended next test is now `plugin-lite/`: mapped PRX size `0x0434` bytes,
 ## Experiment 006 — user rejects v0.3 cheat-gate compromise; standalone optimization v0.4
 
 The user reported partial custom Jin moves with stutters and still-missing custom font textures in v0.3. Crucially, v0.3 requires PPSSPP Cheats enabled, which violates the full automation objective. The new preferred build is **v0.4 standalone**, with a one-time protected master replay and a RAM-cached 2,458-record runtime (no gameplay I/O, no repeated giant master-group gates). Source and instructions are preserved; hot execution interval ~20ms. Compiles in PSPSDK, **not yet Android-validated**. Font compatibility deferred. See [Experiment 006](../research/jin-lifecycle/experiment-006-v04-standalone-optimization.md).
+
+## Incident 003 (Oct 10) — before-fight v0.4 crash
+
+v0.4 bad execution address `PC=0x10`, RA `0x0893F4D8`, crash before fight; screenshot showed Cheats enabled despite v0.4 standalone requirement. v0.3's auto `_C1` master/runtime may remain in the shared INI and must be disabled for an uncontaminated next run. The v0.4 fight-ready predicate was also too weak. v0.4.1 adds current-move pointer validation and ~2-second stable fight condition. PSPSDK compilation passed; **Android success is not claimed**. See [incident 003](../research/jin-lifecycle/incident-003-v04-prematch-null-jump.md).

@@ -34,3 +34,7 @@ Font/texture replacement compatibility is deferred, per user priority.
 
 If source code refuses memory overlap or cannot suspend user_main, it fails
 closed without applying master rather than risk damaging module execution.
+
+## v0.4.1 critical test requirement
+
+**Before another test:** PPSSPP's last crash screen reported `Cheats: Y`. The rejected v0.3 ZIP installed `_C1 Jin8 Auto Master (One-Time)` and `_C1 Jin8 Auto Runtime (After Master)`. **Turn Cheats OFF entirely**, ensure old Jin8Gate PRX is disabled/removed, and cold boot. Running both old auto-cheats and standalone Jin8 can conflict. The guarded v0.4.1 waits for current-move pointer readiness and ~2 seconds of a stable Jin fight state before its master pass. If it crashes, stop and provide `Jin8.log`; do not keep blindly retrying. [Investigation](../research/jin-lifecycle/incident-003-v04-prematch-null-jump.md).

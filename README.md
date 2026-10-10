@@ -1,6 +1,6 @@
 # Tekken6 Jin8 — Fully automatic standalone PPSSPP plugin
 
-**Current experimental build:** v0.4 standalone, independent of PPSSPP Cheats. Targets Tekken 6 USA `ULUS10466` with original Jin8 source data. Android gameplay stability and stutter reduction **remain to be validated by the user**.
+**Current experimental build:** v0.4.1 guarded standalone, independent of PPSSPP Cheats. Targets Tekken 6 USA `ULUS10466` with original Jin8 source data. Android gameplay stability and stutter reduction **remain to be validated by the user**.
 
 ## Goal and current build
 
@@ -21,3 +21,7 @@ The public build workflow contains the PRX/manifest only. You need to provide yo
 - **v0.4:** returns to truly standalone execution, but runs master safely once and caches the active runtime. This is an engineering experiment, not a confirmed stable release.
 
 [Full research log](research/jin-lifecycle/README.md) · [Ultrawide compatibility](docs/architecture/ultrawide-compatibility.md)
+
+## Latest crash checkpoint (Incident 003)
+
+v0.4 crashed before the fight loaded with PC `0x00000010`, RA `0x0893F4D8`; its screenshot showed `Cheats: Y`. The older v0.3 zip installed two `_C1` auto cheat groups, so concurrent execution has **not been ruled out**. The new v0.4.1 standalone source requires a valid current-move pointer and a stable two-second fight-ready interval before initializing the original master. It still needs an Android test with **PPSSPP Cheats OFF**. See [incident investigation](research/jin-lifecycle/incident-003-v04-prematch-null-jump.md).
