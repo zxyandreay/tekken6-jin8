@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include "battle_clock.h"
 #include "battle_activity.h"
+#include "dirty_pages.h"
 
 PSP_MODULE_INFO("Tekken6JinKiwiYu", 0, 1, 0);
 PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER);
@@ -46,7 +47,10 @@ PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER);
 #define FIGHT_SETTLE_TICKS 80u
 #define MASTER_ONLY_PATH "ms0:/PSP/PLUGINS/Tekken6JinKiwiYu/KiwiYu.masteronly"
 #define PROTECTED_MAX 28
-#define MAX_DIRTY_RANGES 128
+#define MAX_DIRTY_RANGES 128 /* retired legacy count: runtime now exact page bitmap */
+#define LARGE_COPY_LIMIT (1024u * 1024u)
+#define LARGE_COPY_PATH "ms0:/PSP/PLUGINS/Tekken6JinKiwiYu/KiwiYu.allowlargecopies"
+#define CINEMATICS_PATH "ms0:/PSP/PLUGINS/Tekken6JinKiwiYu/KiwiYu.cinematics"
 
 typedef struct { uint32_t a, b; } Line;
 typedef struct {
@@ -60,6 +64,9 @@ static volatile int running = 1;
 static volatile int active_thread = 0;
 static int safe_mode = 0;
 static int master_only_mode = 0;
+static int allow_large_copies = 0;
+static int cinematics_enabled = 0;
+static unsigned int large_copy_skips, sentinel_skips, cinematic_skips;
 static int logged_first_runtime = 0;
 static int write_rejected = 0;
 static Line *cached_runtime = NULL;
@@ -143,19 +150,26 @@ static int protect_loaded_modules(void) {
 /* The built-in PPSSPP CWCheat engine invalidates JIT across all guest RAM.
    v0.4.2 invalidated only 0x08800000..0x08A00000, missing executable payload.
    Batch one master invalidation and record changed runtime addresses. */
-typedef struct { uint32_t start, end; } DirtyRange;
-static DirtyRange dirty_ranges[MAX_DIRTY_RANGES];
-static unsigned int dirty_count;
+/* Master: one bulk invalidate after loading a large static payload.
+ * Runtime: exact 4KB-page bitmap; NEVER invalidate one gigantic min-max
+ * range just because 128 disjoint writes overflowed the old list.
+ * A few thousand bytes of bitmap avoid repeatedly dropping all JIT blocks. */
+static uint8_t dirty_page_map[DIRTY_BITMAP_BYTES];
 static uint32_t dirty_min = MAX_GUEST, dirty_max;
-static int dirty_bulk, dirty_overflow;
+static int dirty_bulk;
 static unsigned int changed_writes;
+static unsigned int invalidation_calls, invalidation_bytes;
 static void begin_dirty(int master) {
-    dirty_count = 0;
     dirty_min = MAX_GUEST;
     dirty_max = 0;
     dirty_bulk = master;
-    dirty_overflow = 0;
     changed_writes = 0;
+    invalidation_calls = 0;
+    invalidation_bytes = 0;
+    large_copy_skips = 0;
+    sentinel_skips = 0;
+    cinematic_skips = 0;
+    if (!master) memset(dirty_page_map, 0, sizeof(dirty_page_map));
 }
 static void mark_dirty(uint32_t addr, uint32_t bytes) {
     if (!bytes || !range_ok(addr, bytes)) return;
@@ -163,29 +177,29 @@ static void mark_dirty(uint32_t addr, uint32_t bytes) {
     uint32_t end = addr + bytes;
     if (addr < dirty_min) dirty_min = addr;
     if (end > dirty_max) dirty_max = end;
-    if (dirty_bulk || dirty_overflow) return;
-    if (dirty_count && addr <= dirty_ranges[dirty_count-1].end + 32u &&
-        end >= dirty_ranges[dirty_count-1].start) {
-        DirtyRange *last = &dirty_ranges[dirty_count-1];
-        if (addr < last->start) last->start = addr;
-        if (end > last->end) last->end = end;
-    } else if (dirty_count < MAX_DIRTY_RANGES) {
-        dirty_ranges[dirty_count].start = addr;
-        dirty_ranges[dirty_count].end = end;
-        dirty_count++;
-    } else dirty_overflow = 1;
+    if (!dirty_bulk) dirty_pages_add(dirty_page_map, addr, bytes);
 }
 static void flush_dirty(void) {
     if (dirty_min >= dirty_max) return;
-    if (dirty_bulk || dirty_overflow) {
-        /* One deferred JIT invalidation over the touched master range. */
+    if (dirty_bulk) {
+        /* Master initialization happens only after user_main is suspended. */
         sceKernelIcacheInvalidateRange((const void *)(uintptr_t)dirty_min,
                                       dirty_max - dirty_min);
-    } else {
-        for (unsigned int j = 0; j < dirty_count; ++j)
-            sceKernelIcacheInvalidateRange(
-                (const void *)(uintptr_t)dirty_ranges[j].start,
-                dirty_ranges[j].end - dirty_ranges[j].start);
+        invalidation_calls = 1;
+        invalidation_bytes = dirty_max - dirty_min;
+        return;
+    }
+    uint32_t p = (dirty_min - DIRTY_BASE) >> DIRTY_PAGE_SHIFT;
+    uint32_t last = ((dirty_max - 1u) - DIRTY_BASE) >> DIRTY_PAGE_SHIFT;
+    while (p <= last) {
+        if (!dirty_pages_has(dirty_page_map, p)) { ++p; continue; }
+        uint32_t first = p;
+        do { ++p; } while (p <= last && dirty_pages_has(dirty_page_map, p));
+        uint32_t addr = DIRTY_BASE + (first << DIRTY_PAGE_SHIFT);
+        uint32_t bytes = (p - first) << DIRTY_PAGE_SHIFT;
+        sceKernelIcacheInvalidateRange((const void *)(uintptr_t)addr, bytes);
+        ++invalidation_calls;
+        invalidation_bytes += bytes;
     }
 }
 
@@ -194,6 +208,21 @@ static void setmem(uint32_t a, int size, uint32_t val) {
     if (intersects_protected(a, (uint32_t)size)) { write_rejected = 1; return; }
     uint32_t mask = size == 1 ? 0xFFu : (size == 2 ? 0xFFFFu : 0xFFFFFFFFu);
     val &= mask;
+    /* Source contains a 16-way 8.5MiB memory-snapshot feature that also
+       places an invalid 0x12345678 temporary pointer in the gameplay state.
+       Never let that sentinel escape without the opt-in legacy copy path. */
+    if (!dirty_bulk && !allow_large_copies &&
+        a == 0x08C07D24u && size == 4 && val == 0x12345678u) {
+        ++sentinel_skips;
+        return;
+    }
+    /* Optional creator cinematic zoom/interpolation. Leave KiwiYu's
+       underlying animation and special-move logic intact by default. */
+    if (!dirty_bulk && !cinematics_enabled &&
+        (a == 0x0895350Cu || a == 0x08D6F270u)) {
+        ++cinematic_skips;
+        return;
+    }
     /* Do not constantly repatch code or invalidate every JIT block.
        This is the major fix over the rejected first experimental build. */
     if (getmem(a, size) == val) return;
@@ -349,9 +378,21 @@ static int execute(Stream *s) {
         case 5: {
             if (!next(s, &y)) return 0;
             uint32_t to = cwaddr(y.a);
+            /* Sixteen original runtime commands copy 0x880000 bytes from
+               0x08B00000 to 0x08C00000. Repeating 8.5 MiB copies during
+               combat can freeze the game and overwrite live character state.
+               Treat as opt-in legacy engine snapshot behavior. */
+            if (!dirty_bulk && b > LARGE_COPY_LIMIT && !allow_large_copies) {
+                ++large_copy_skips;
+                break;
+            }
             if (b && b < 24u * 1024u * 1024u && range_ok(a, b) && range_ok(to, b) && !intersects_protected(to, b)) {
-                memmove((void *)(uintptr_t)to, (const void *)(uintptr_t)a, b);
-                mark_dirty(to, b);
+                /* Small copy instructions often copy the same bytes every
+                   16 ms. Skip memcpy and JIT invalidation if no data differs. */
+                if (memcmp((const void *)(uintptr_t)to, (const void *)(uintptr_t)a, b) != 0) {
+                    memmove((void *)(uintptr_t)to, (const void *)(uintptr_t)a, b);
+                    mark_dirty(to, b);
+                }
             }
             break;
         }
@@ -385,8 +426,13 @@ static int execute(Stream *s) {
                     uint32_t dst = getmem(base_addr, 4) + (x.a & 0x0FFFFFFFu);
                     if (val && val < 24u * 1024u * 1024u &&
                         range_ok(src, val) && range_ok(dst, val) && !intersects_protected(dst, val)) {
-                        memmove((void *)(uintptr_t)dst, (const void *)(uintptr_t)src, val);
-                        mark_dirty(dst, val);
+                        if (val <= LARGE_COPY_LIMIT || allow_large_copies) {
+                            if (memcmp((const void *)(uintptr_t)dst,
+                                       (const void *)(uintptr_t)src, val) != 0) {
+                                memmove((void *)(uintptr_t)dst, (const void *)(uintptr_t)src, val);
+                                mark_dirty(dst, val);
+                            }
+                        } else ++large_copy_skips;
                     }
                     mode = -1;
                 }
@@ -520,19 +566,32 @@ static int loader_thread(SceSize args, void *argp) {
     (void)args; (void)argp;
     active_thread = 1;
     log_fd = sceIoOpen(LOG_PATH, PSP_O_WRONLY | PSP_O_CREAT | PSP_O_TRUNC, 0666);
-    note("KiwiYu Jin 1.0 standalone v0.3: verified-fight input fallback");
+    note("KiwiYu Jin 1.0 standalone v0.4: precise JIT pages + legacy copy guard");
     SceUID safefd = sceIoOpen(SAFE_PATH, PSP_O_RDONLY, 0);
     if (safefd >= 0) {
         sceIoClose(safefd);
         safe_mode = 1;
         note("SAFE MODE: no cheat writes; footprint/texture control only");
     }
+    SceUID cinematicfd = sceIoOpen(CINEMATICS_PATH, PSP_O_RDONLY, 0);
+    if (cinematicfd >= 0) {
+        sceIoClose(cinematicfd);
+        cinematics_enabled = 1;
+        note("ORIGINAL CINEMATIC CAMERA/INTERPOLATION ENABLED (opt-in)");
+    } else note("SMOOTH CAMERA: source cinematic camera/interpolation writes suppressed");
+    SceUID largefd = sceIoOpen(LARGE_COPY_PATH, PSP_O_RDONLY, 0);
+    if (largefd >= 0) {
+        sceIoClose(largefd);
+        allow_large_copies = 1;
+        note("WARNING: experimental 8.5 MiB snapshot copies ENABLED (opt-in)");
+    } else note("SAFETY GUARD: repeated 8.5 MiB snapshot copies + placeholder pointer blocked");
     SceUID onlyfd = sceIoOpen(MASTER_ONLY_PATH, PSP_O_RDONLY, 0);
     if (onlyfd >= 0) { sceIoClose(onlyfd); master_only_mode = 1; note("MASTER-ONLY diagnostic enabled"); }
     if (!safe_mode && !load_runtime_once()) goto done;
     if (!safe_mode && !protect_loaded_modules()) goto done;
     int installed = 0, idle_cycles = 0;
-    uint32_t prior_base = 0;
+    unsigned int master_install_count = 0;
+    unsigned int runtime_pass_count = 0;
     uint32_t settle_base = 0;
     unsigned int settle_ticks = 0;
     BattleClock clock;
@@ -550,7 +609,13 @@ static int loader_thread(SceSize args, void *argp) {
             round_wait_polls = 0;
             battle_clock_reset(&clock);
             battle_activity_reset(&action);
-            if (++idle_cycles > 40) { installed = 0; prior_base = 0; }
+            /* Character data can disappear briefly during Rage Art,
+               transformations and stage transitions. Do not replay both
+               7 MiB masters after just 1 second of missing pointers. */
+            if (++idle_cycles == 320 && installed) {
+                installed = 0;
+                note("fight exited for >=8s; master may arm for next fight");
+            }
             sceKernelDelayThread(25000); continue;
         }
         idle_cycles = 0;
@@ -574,7 +639,7 @@ static int loader_thread(SceSize args, void *argp) {
            accept either a genuine decreasing timer OR an actual player
            attack corroborated by changing in-fight P1 move ID and input.
            Neither route accepts mere character select/loading pointers. */
-        if (!installed || base != prior_base) {
+        if (!installed) {
             if (!round_clock_logged) {
                 note("stable move table; waiting for active round timer (no writes yet)");
                 round_clock_logged = 1;
@@ -606,7 +671,7 @@ static int loader_thread(SceSize args, void *argp) {
                 note("PLAYER ACTION CONFIRMED: actual P1 input+move; master may initialize");
             }
         }
-        if (!installed || base != prior_base) {
+        if (!installed) {
             note("in-fight activity or countdown confirmed; checking master targets");
             if (legacy_master_conflict()) {
                 note("Abort this fight; disable PPSSPP Cheats and remove old v0.3 INI");
@@ -646,7 +711,9 @@ static int loader_thread(SceSize args, void *argp) {
                 while (running && jin_fight_ready(0)) sceKernelDelayThread(50000);
                 continue;
             }
-            installed = 1; prior_base = base;
+            installed = 1;
+            ++master_install_count;
+            note_hex("total master initializations = ", master_install_count);
         }
         if (master_only_mode) { sceKernelDelayThread(50000); continue; }
         /* The massive master ran while user_main was suspended, but the
@@ -660,9 +727,23 @@ static int loader_thread(SceSize args, void *argp) {
         if (!logged_first_runtime) {
             note("first runtime pass completed");
             note_hex("first runtime changed write operations = ", changed_writes);
-            if (!changed_writes)
-                note("WARNING: runtime made NO changes on first pass; check state and move mapping");
+            note_hex("first runtime JIT invalidated bytes = ", invalidation_bytes);
+            note_hex("first runtime JIT invalidate batches = ", invalidation_calls);
+            note_hex("first runtime huge memcpy blocks skipped = ", large_copy_skips);
+            note_hex("first runtime snapshot sentinels blocked = ", sentinel_skips);
+            note_hex("first runtime cinematic writes skipped = ", cinematic_skips);
             logged_first_runtime = 1;
+        }
+        /* Limited telemetry, no per-frame storage I/O. Helps identify
+           recurrent cinematic triggers or expensive copy behavior. */
+        ++runtime_pass_count;
+        if ((runtime_pass_count & 255u) == 0u) {
+            note_hex("runtime cycles = ", runtime_pass_count);
+            note_hex("last JIT invalidated bytes = ", invalidation_bytes);
+            note_hex("last JIT invalidate batches = ", invalidation_calls);
+            note_hex("last changed writes = ", changed_writes);
+            note_hex("last large memcpy skips = ", large_copy_skips);
+            note_hex("last cinematic writes suppressed = ", cinematic_skips);
         }
         sceKernelDelayThread(16000);
     }

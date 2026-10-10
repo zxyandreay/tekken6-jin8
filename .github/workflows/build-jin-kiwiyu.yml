@@ -30,7 +30,7 @@ jobs:
           cp plugin-kiwiyu/INSTALL.md dist/INSTALL.md
       - uses: actions/upload-artifact@v4
         with:
-          name: Tekken6JinKiwiYu-v0.3-PRX
+          name: Tekken6JinKiwiYu-v0.4-PRX
           path: dist/
           if-no-files-found: error
 
@@ -42,3 +42,12 @@ jobs:
         run: |
           gcc -std=c11 -Wall -Wextra -Werror -I plugin-kiwiyu/src tests/battle_activity_test.c -o /tmp/kiwiyu-gate-test
           /tmp/kiwiyu-gate-test
+
+  dirty-page-unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify 80MB dirty-bitmap boundaries and deduplication
+        run: |
+          gcc -std=c11 -Wall -Wextra -Werror -I plugin-kiwiyu/src tests/kiwiyu_dirty_pages_test.c -o /tmp/kiwiyu-dirty-pages
+          /tmp/kiwiyu-dirty-pages
