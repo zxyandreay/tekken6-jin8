@@ -50,3 +50,17 @@
 - Reduce Jin8's mapped ELF segment even further with a small bootstrap plus deferred/relocated loader, ensuring no conflict with code/data payload ranges; measure `PT_LOAD` and avoid adding allocations into resource-sensitive game memory before the texture/font init.
 - Narrow source runtime writes to a verified phase and/or enforce whitelist of ranges/expected words, then reconcile differences against PPSSPP's actual CWCheat interpreter.
 - Capture precise local crash timing, PC/RA backtrace and plugin load addresses before declaring fixed.
+
+## v0.2 packaged artifact and build checkpoint
+
+- Source/build head: `f83116fc1267f7321d411a5f727c819f26b29513`.
+- PSPDEV GitHub Actions build: [run 38031228170](https://github.com/zxyandreay/tekken6-jin8/actions/runs/38031228170) — **success**, including ELF32 mapped-memory ceiling `p_memsz < 0x2400`.
+- Research/test run: [38031228176](https://github.com/zxyandreay/tekken6-jin8/actions/runs/38031228176) — **success**.
+- New PRX SHA-256: `90e07b3b11444ed02a5935142997bd0f5dbc8a1f6a6b0c8f13ee8fa5f44f83f7` (10,902-byte file; `p_memsz=0x1DD8`).
+- User-facing experimental combined ZIP: `Tekken6Jin8-v0.2-CrashMitigation-ULUS10466.zip` — **2,413,965 bytes**, SHA-256 `c33fa1d509dc9358491dd5b7a07a820044e962d3d31972e7c1245cb47d4d1028`.
+- Packaged `master.j8c`: 511,607 records, SHA-256 `956b045210749885ad21da15c0c190f5d6db34fdd8fb998c517c5097fb4c37ca`.
+- Packaged `runtime.j8c`: 2,458 records, SHA-256 `ace847db19328eca86b05412d9ee8f4cc1349ec34ea97f0630c7f570dc7a68aa`.
+- Included `Jin8.safe.example` is harmless until renamed exactly `Jin8.safe`; the feature is opt-in. The manifest is version 2 and still uses `memory=80`.
+- The artifact is supplied in the user's conversation, not committed to the public repository because converted third-party cheat data is derived from a user-supplied source with unverified redistribution permission.
+
+**Disposition:** v0.1 rejected, v0.2 test-ready but **not yet device-accepted**. No claims of solved crash, font replacement, fully converted moveset, or Rage Art until verified in PPSSPP on the user's device.
