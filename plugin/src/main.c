@@ -28,7 +28,9 @@ PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER);
 #define LOG_PATH "ms0:/PSP/PLUGINS/Tekken6Jin8/Jin8.log"
 #define MASTER_LINES 511607u
 #define RUNTIME_LINES 2458u
-#define BLOCK_WORDS 512
+#define BLOCK_WORDS 128
+#define SAFE_PATH "ms0:/PSP/PLUGINS/Tekken6Jin8/Jin8.safe"
+#define CURRENT_MOVE_ADDR 0x08C07A18u
 
 typedef struct { uint32_t a, b; } Line;
 typedef struct {
@@ -40,9 +42,8 @@ typedef struct {
 
 static volatile int running = 1;
 static volatile int active_thread = 0;
+static int safe_mode = 0;
 static SceUID thread_id = -1;
-static Line runtime[RUNTIME_LINES];
-static unsigned runtime_count = 0;
 static SceUID log_fd = -1;
 
 static void note(const char *message) {
@@ -66,9 +67,18 @@ static uint32_t getmem(uint32_t a, int size) {
 }
 static void setmem(uint32_t a, int size, uint32_t val) {
     if (!range_ok(a, size) || (a & (size - 1)) != 0) return;
+    uint32_t mask = size == 1 ? 0xFFu : (size == 2 ? 0xFFFFu : 0xFFFFFFFFu);
+    val &= mask;
+    /* Do not constantly repatch code or invalidate every JIT block.
+       This is the major fix over the rejected first experimental build. */
+    if (getmem(a, size) == val) return;
     if (size == 1) *(volatile uint8_t *)(uintptr_t)a = (uint8_t)val;
     else if (size == 2) *(volatile uint16_t *)(uintptr_t)a = (uint16_t)val;
     else *(volatile uint32_t *)(uintptr_t)a = val;
+    if (a >= 0x08800000u && a < 0x08A00000u) {
+        sceKernelDcacheWritebackInvalidateRange((const void *)(uintptr_t)a, (unsigned int)size);
+        sceKernelIcacheInvalidateRange((const void *)(uintptr_t)a, (unsigned int)size);
+    }
 }
 static int open_reader(Reader *r, const char *path, uint32_t expected) {
     char magic[8];
@@ -124,7 +134,6 @@ static int test_value(uint32_t left, uint32_t right, uint32_t op) {
 }
 static int execute(Stream *s) {
     Line x, y;
-    int changes_code = 0;
     while (running && next(s, &x)) {
         uint32_t type = x.a >> 28, a = cwaddr(x.a), b = x.b;
         uint32_t n, addr, val;
@@ -223,27 +232,35 @@ static int execute(Stream *s) {
                Unknown commands fail closed rather than corrupt later writes. */
             return 0;
         }
-        if (a >= 0x08800000u && a < 0x08A00000u &&
-            (type == 0 || type == 1 || type == 2)) changes_code = 1;
     }
-    /* Only the engine's game-code writes require instruction synchronization. */
-    sceKernelDcacheWritebackInvalidateAll();
-    if (changes_code) sceKernelIcacheInvalidateAll();
     return 1;
 }
-static int read_runtime(void) {
+static int validate_runtime(void) {
     Reader rd;
     rd.fd = -1;
     if (!open_reader(&rd, RUNTIME_PATH, RUNTIME_LINES)) {
         close_reader(&rd); note("runtime file missing or bad header"); return 0;
     }
-    while (runtime_count < RUNTIME_LINES &&
-           read_next(&rd, &runtime[runtime_count])) runtime_count++;
+    Line line;
+    uint32_t count = 0;
+    while (read_next(&rd, &line)) count++;
     close_reader(&rd);
-    if (runtime_count != RUNTIME_LINES) {
-        note("runtime truncated"); return 0;
+    if (count != RUNTIME_LINES) { note("runtime truncated"); return 0; }
+    note("runtime file validated; streaming (no 20KB resident table)");
+    return 1;
+}
+static int execute_runtime(void) {
+    Reader rd;
+    rd.fd = -1;
+    if (!open_reader(&rd, RUNTIME_PATH, RUNTIME_LINES)) {
+        close_reader(&rd); return 0;
     }
-    note("runtime loaded"); return 1;
+    Stream stream;
+    memset(&stream, 0, sizeof(stream));
+    stream.reader = &rd;
+    int ok = execute(&stream);
+    close_reader(&rd);
+    return ok;
 }
 static int load_master(void) {
     Reader rd;
@@ -277,8 +294,14 @@ static int loader_thread(SceSize args, void *argp) {
     (void)args; (void)argp;
     active_thread = 1;
     log_fd = sceIoOpen(LOG_PATH, PSP_O_WRONLY | PSP_O_CREAT | PSP_O_TRUNC, 0666);
-    note("Tekken6Jin8 experimental PRX initialized");
-    if (!read_runtime()) goto done;
+    note("Tekken6Jin8 experimental PRX v0.2 initialized");
+    SceUID safefd = sceIoOpen(SAFE_PATH, PSP_O_RDONLY, 0);
+    if (safefd >= 0) {
+        sceIoClose(safefd);
+        safe_mode = 1;
+        note("SAFE MODE: no cheat writes; footprint/texture control only");
+    }
+    if (!safe_mode && !validate_runtime()) goto done;
     int installed = 0, idle_cycles = 0;
     uint32_t prior_base = 0;
     while (running) {
@@ -288,7 +311,13 @@ static int loader_thread(SceSize args, void *argp) {
             sceKernelDelayThread(25000); continue;
         }
         idle_cycles = 0;
+        if (safe_mode) { sceKernelDelayThread(50000); continue; }
         if (!installed || base != prior_base) {
+            /* Make sure the player's active move/state has initialized; avoid
+               patching the engine during level and character allocations. */
+            if (getmem(CURRENT_MOVE_ADDR, 4) == 0) {
+                sceKernelDelayThread(25000); continue;
+            }
             note("Jin fight detected; initializing master");
             if (!load_master()) {
                 /* Fail closed and throttle retry; avoid infinite repeated 4MB writes. */
@@ -299,11 +328,10 @@ static int loader_thread(SceSize args, void *argp) {
             }
             installed = 1; prior_base = base;
         }
-        Stream stream;
-        memset(&stream, 0, sizeof(stream));
-        stream.data = runtime;
-        stream.count = runtime_count;
-        (void)execute(&stream);
+        if (!execute_runtime()) {
+            note("runtime execution failed; stopping interpreter for safety");
+            goto done;
+        }
         sceKernelDelayThread(50000);
     }
 done:
@@ -315,7 +343,7 @@ done:
 int module_start(SceSize args, void *argp) {
     (void)args; (void)argp;
     running = 1;
-    thread_id = sceKernelCreateThread("Jin8Loader", loader_thread, 0x18, 0x8000, 0, NULL);
+    thread_id = sceKernelCreateThread("Jin8Loader", loader_thread, 0x20, 0x4000, 0, NULL);
     if (thread_id >= 0) sceKernelStartThread(thread_id, 0, NULL);
     return 0;
 }

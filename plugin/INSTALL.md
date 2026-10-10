@@ -47,3 +47,9 @@ Do not modify or replace the official Tekken6Ultrawide PRX.
 Record whether PPSSPP boots, both modules appear in the debugger,
 Jin8.log says "master initialized", and whether one custom Jin move
 works with both CWCheats disabled. Test texture replacements separately.
+
+## v0.2 crash regression and safe-mode diagnostic
+
+The first PRX mapped `0x6A08` bytes, including a 20KB statically resident runtime cheat table, and invalidated the **entire instruction cache every 50ms**. In the ultrawide project a controlled memory-layout A/B established that enlarging a PRX from `0x0EB0` to `0x12D0` was *sufficient* to break some replacement texture identifiers. The v0.2 Jin8 build streams runtime data from its own resource file rather than keeping the 20KB table permanently mapped, uses a 128-line I/O buffer, and only invalidates the specific modified game-code address when the value changes. It reduces the thread stack as well. These reduce risks but **do not prove** the crash and texture regression fixed.
+
+If PPSSPP still crashes, you can test an *identical binary and memory manifest without any cheat writes*: create an empty file `PSP/PLUGINS/Tekken6Jin8/Jin8.safe` then cold-boot. The log will say `SAFE MODE`. This control is essential to distinguish *module footprint / expanded memory* from *payload execution*, not a working moveset mode. Delete `Jin8.safe` afterwards to re-enable automation. Never enable source Jin CWCheats simultaneously.
