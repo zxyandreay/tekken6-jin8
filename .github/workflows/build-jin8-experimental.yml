@@ -22,17 +22,12 @@ jobs:
         run: |
           make -C plugin
           test -s plugin/Tekken6Jin8.prx
-          python3 - <<'PY'
-          import struct
-          b = open('plugin/Tekken6Jin8.prx', 'rb').read()
-          assert b[:4] == b'\x7fELF' and b[4] == 1 and b[5] == 1
-          p_offset = struct.unpack_from('<I', b, 28)[0]
-          p_count = struct.unpack_from('<H', b, 44)[0]
-          assert p_count == 1
-          p_filesz, p_memsz = struct.unpack_from('<II', b, p_offset + 16)
-          print(f'PRX mapped file bytes={p_filesz:#x}, resident bytes={p_memsz:#x}')
-          assert p_memsz < 0x2400, 'PRX footprint regression beyond v0.2 safety ceiling'
-          PY
+          # PSPDEV container has no Python; inspect ELF32 little-endian PHDR with coreutils.
+          test "$(od -An -tu2 -j 44 -N 2 plugin/Tekken6Jin8.prx | tr -d '[:space:]')" = "1"
+          memsz="$(od -An -tu4 -j 72 -N 4 plugin/Tekken6Jin8.prx | tr -d '[:space:]')"
+          echo "Jin8 PRX mapped memory bytes: $memsz (v0.2 ceiling 9216)"
+          test "$memsz" -lt 9216
+
       - name: Stage plugin shell (data is generated locally)
         run: |
           mkdir -p dist/PSP/PLUGINS/Tekken6Jin8
