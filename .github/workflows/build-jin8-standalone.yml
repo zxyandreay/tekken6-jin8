@@ -1,4 +1,4 @@
-name: Build Jin8 Standalone v0.4 (no PPSSPP cheats)
+name: Build Jin8 Standalone v0.5 (no PPSSPP cheats)
 on:
   push:
     paths:
@@ -30,7 +30,7 @@ jobs:
           cp plugin-standalone/INSTALL.md dist/INSTALL.md
       - uses: actions/upload-artifact@v4
         with:
-          name: Tekken6Jin8-Standalone-v0.4-PRX
+          name: Tekken6Jin8-Standalone-v0.5-PRX
           path: dist/
           if-no-files-found: error
 

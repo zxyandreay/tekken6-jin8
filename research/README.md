@@ -30,3 +30,5 @@ When a hypothesis is demonstrated, update the canonical file in `docs/` and pres
 - [Incident 005: v0.4.2 first-runtime complete, partial JIT invalidation fixed in v0.4.3](jin-lifecycle/incident-005-v042-jit-coverage.md).
 
 - [Incident 006: v0.4.3 still PC=0x10; master-only control is next](jin-lifecycle/incident-006-v043-repeat-null-jump.md).
+
+- [Incident 008: v0.5 countdown-triggered standalone loader](jin-lifecycle/incident-008-v05-battle-clock.md) — user crash evidence, implementation, build and remaining tests.

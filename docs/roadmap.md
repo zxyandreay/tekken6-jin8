@@ -96,3 +96,7 @@ User turned PPSSPP Cheats completely OFF, requested `Jin8.masteronly`, and still
 ### Incident 007 evidence update — log confirmed
 
 The exact master-only log has now been received and establishes completed master initialization and `user_main resumed` without Jin runtime execution. Global Cheats were OFF. Next effort: battle-ready-state detection plus native master write/condition parity; do not release another speculative full PRX or modify official ultrawide. [Full log and source audit](../research/jin-lifecycle/incident-007-master-only-cheats-off.md).
+
+## Incident 008 / Experiment 007 — v0.5 guarded after real battle timer starts
+
+After the verified Cheats-OFF master-only crash, v0.5 requires **documented round-timer address `0x090FBE4C` to decrease** repeatedly before master initialization. This replaces relying entirely on Jin's early-loaded move pointers and a 2-second settle. No confirmation = no memory writes (fail-closed). PSPDEV compile and standalone timer unit tests pass, but Android timing, stability, and smoothness remain unverified. The full user-original master/runtime data remain unchanged. The ultrawide official PRX remains untouched. [Experiment / artifacts](../research/jin-lifecycle/incident-008-v05-battle-clock.md).

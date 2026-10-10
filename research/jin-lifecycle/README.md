@@ -107,3 +107,7 @@ User observed partially working Jin8 animations but repeated stutters under v0.3
 [Latest isolation evidence](incident-007-master-only-cheats-off.md): user reports `Jin8.masteronly` enabled, and screenshot confirms `Cheats: N`. Crash still has PC `0x10` and new RA `0x088E78EC`. The new master-only `Jin8.log` has not surfaced as an accessible attachment yet; do not substitute the older full-runtime log. Await log verification before another build.
 
 **Update:** Received exact master-only `Jin8.log`: marker recognized, master preflight/invalidation/two signature checks completed, then `user_main resumed`; no runtime pass. With screenshot `Cheats:N`, this confirms the crash can occur *without the Jin runtime or global CWCheats*. [Verified Incident 007](incident-007-master-only-cheats-off.md).
+
+## Incident 008 / v0.5 experimental build
+
+[Battle-clock-gated loader investigation](incident-008-v05-battle-clock.md): the verified master-only + Cheats OFF result motivated an independent round-timer-driven readiness check. v0.5 waits for actual decreasing Tekken 6 timer instead of patching as soon as pointers look valid. Fails closed if unsupported. PSP compilation and host unit tests pass; Android result pending.
