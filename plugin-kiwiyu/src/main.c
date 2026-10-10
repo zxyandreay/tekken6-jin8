@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "battle_clock.h"
+#include "battle_activity.h"
 
 PSP_MODULE_INFO("Tekken6JinKiwiYu", 0, 1, 0);
 PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER);
@@ -38,6 +39,7 @@ PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER);
 #define SAFE_PATH "ms0:/PSP/PLUGINS/Tekken6JinKiwiYu/KiwiYu.safe"
 #define CURRENT_MOVE_ADDR 0x08C07A18u
 #define CURRENT_MOVE_POINTER_ADDR 0x08C07964u
+#define PLAYER_INPUT_ADDR 0x08C07D3Cu /* verified stock in-fight P1 input */
 /* Tekken 6 PSP CWCheat timer: _L 0x208FBE4C 0x00000E11 (60 sec). */
 #define ROUND_TIMER_ADDR 0x090FBE4Cu
 /* 80 consecutive samples at 25ms = ~2 seconds of stable fight state. */
@@ -518,7 +520,7 @@ static int loader_thread(SceSize args, void *argp) {
     (void)args; (void)argp;
     active_thread = 1;
     log_fd = sceIoOpen(LOG_PATH, PSP_O_WRONLY | PSP_O_CREAT | PSP_O_TRUNC, 0666);
-    note("KiwiYu Jin 1.0 standalone v0.2: activation/write telemetry");
+    note("KiwiYu Jin 1.0 standalone v0.3: verified-fight input fallback");
     SceUID safefd = sceIoOpen(SAFE_PATH, PSP_O_RDONLY, 0);
     if (safefd >= 0) {
         sceIoClose(safefd);
@@ -534,7 +536,9 @@ static int loader_thread(SceSize args, void *argp) {
     uint32_t settle_base = 0;
     unsigned int settle_ticks = 0;
     BattleClock clock;
+    BattleActivity action;
     battle_clock_reset(&clock);
+    battle_activity_reset(&action);
     int round_clock_logged = 0;
     unsigned int round_wait_polls = 0;
     while (running) {
@@ -545,6 +549,7 @@ static int loader_thread(SceSize args, void *argp) {
             round_clock_logged = 0;
             round_wait_polls = 0;
             battle_clock_reset(&clock);
+            battle_activity_reset(&action);
             if (++idle_cycles > 40) { installed = 0; prior_base = 0; }
             sceKernelDelayThread(25000); continue;
         }
@@ -555,6 +560,7 @@ static int loader_thread(SceSize args, void *argp) {
             round_clock_logged = 0;
             round_wait_polls = 0;
             battle_clock_reset(&clock);
+            battle_activity_reset(&action);
             note("Jin move table candidate found; waiting for battle stability");
         }
         if (settle_ticks < FIGHT_SETTLE_TICKS) {
@@ -563,9 +569,11 @@ static int loader_thread(SceSize args, void *argp) {
             continue;
         }
         if (safe_mode) { sceKernelDelayThread(50000); continue; }
-        /* A current move ID can exist while the game is still loading.
-           Require the actual 60s round timer to count down in repeated
-           samples; otherwise NEVER modify the game. No manual cheat toggle. */
+        /* A current move ID alone can exist during stage loading.
+           The v0.2 clock was zero during the user's normal battle, so
+           accept either a genuine decreasing timer OR an actual player
+           attack corroborated by changing in-fight P1 move ID and input.
+           Neither route accepts mere character select/loading pointers. */
         if (!installed || base != prior_base) {
             if (!round_clock_logged) {
                 note("stable move table; waiting for active round timer (no writes yet)");
@@ -574,20 +582,32 @@ static int loader_thread(SceSize args, void *argp) {
             uint32_t round_value = getmem(ROUND_TIMER_ADDR, 4);
             if (round_wait_polls == 0)
                 note_hex("round timer first sample = ", round_value);
-            if (!battle_clock_sample(&clock, round_value)) {
+            int timer_ready = battle_clock_sample(&clock, round_value);
+            uint32_t move = getmem(CURRENT_MOVE_ADDR, 4);
+            uint32_t input = getmem(PLAYER_INPUT_ADDR, 4);
+            int action_ready = battle_activity_sample(&action, move, input);
+            if (!timer_ready && !action_ready) {
                 if (++round_wait_polls == 240u) {
                     note_hex("round timer after ~6 seconds = ", round_value);
-                    note("NO MASTER WRITES: waiting for supported countdown");
+                    note_hex("current move sample = ", move);
+                    note_hex("P1 input sample = ", input);
+                    note("NO MASTER WRITES: waiting for verified gameplay action");
                     round_wait_polls = 0;
                 }
                 sceKernelDelayThread(25000);
                 continue;
             }
-            note_hex("round timer qualified at = ", round_value);
-            note("ROUND TIMER ACTIVE: battle confirmed; master may initialize");
+            if (timer_ready) {
+                note_hex("round timer qualified at = ", round_value);
+                note("ROUND TIMER ACTIVE: battle confirmed; master may initialize");
+            } else {
+                note_hex("P1 move corroborated = ", move);
+                note_hex("P1 gameplay input corroborated = ", input);
+                note("PLAYER ACTION CONFIRMED: actual P1 input+move; master may initialize");
+            }
         }
         if (!installed || base != prior_base) {
-            note("battle timer progressed and fight stable; checking master targets");
+            note("in-fight activity or countdown confirmed; checking master targets");
             if (legacy_master_conflict()) {
                 note("Abort this fight; disable PPSSPP Cheats and remove old v0.3 INI");
                 while (running && jin_fight_ready(0)) sceKernelDelayThread(50000);

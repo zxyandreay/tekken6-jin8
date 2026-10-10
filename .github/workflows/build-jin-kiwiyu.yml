@@ -30,6 +30,15 @@ jobs:
           cp plugin-kiwiyu/INSTALL.md dist/INSTALL.md
       - uses: actions/upload-artifact@v4
         with:
-          name: Tekken6JinKiwiYu-v0.1-PRX
+          name: Tekken6JinKiwiYu-v0.3-PRX
           path: dist/
           if-no-files-found: error
+
+  battle-activity-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and run observed P1 fight activity tests
+        run: |
+          gcc -std=c11 -Wall -Wextra -Werror -I plugin-kiwiyu/src tests/battle_activity_test.c -o /tmp/kiwiyu-gate-test
+          /tmp/kiwiyu-gate-test
