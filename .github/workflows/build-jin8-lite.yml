@@ -1,0 +1,37 @@
+name: Build Jin8 lightweight gate PRX
+
+on:
+  push:
+    paths:
+      - 'plugin-lite/**'
+      - '.github/workflows/build-jin8-lite.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: pspdev/pspdev:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build independent gate PRX
+        run: |
+          make -C plugin-lite
+          test -s plugin-lite/Tekken6Jin8Gate.prx
+          test "$(od -An -tu2 -j 44 -N 2 plugin-lite/Tekken6Jin8Gate.prx | tr -d '[:space:]')" = "1"
+          memsz="$(od -An -tu4 -j 72 -N 4 plugin-lite/Tekken6Jin8Gate.prx | tr -d '[:space:]')"
+          echo "PRX mapped footprint: $memsz bytes"
+          test "$memsz" -le 3760
+      - name: Stage lightweight plugin
+        run: |
+          mkdir -p dist/PSP/PLUGINS/Tekken6Jin8Gate
+          cp plugin-lite/Tekken6Jin8Gate.prx dist/PSP/PLUGINS/Tekken6Jin8Gate/
+          cp plugin-lite/config/plugin.ini dist/PSP/PLUGINS/Tekken6Jin8Gate/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Tekken6Jin8Gate-Experimental-v0.3
+          path: dist/
+          if-no-files-found: error
