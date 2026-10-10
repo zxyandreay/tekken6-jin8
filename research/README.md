@@ -18,3 +18,5 @@ When a hypothesis is demonstrated, update the canonical file in `docs/` and pres
 - [Experiment 004: conditional runtime move links](jin-lifecycle/experiment-004-results.md) — three custom links observed, source supports two moveset base prefixes.
 
 - [Experiment 005: cinematic-state event](jin-lifecycle/experiment-005-results.md) — speed mode 3 and zoom 16.0 match original SlowMo cheat; P2 interference documented.
+
+- [Incident 002: v0.2 Jin fight crash; v0.3 native-cheat lightweight gate](jin-lifecycle/incident-002-v02-crash-lite-v03.md) — custom font regression and new implementation test.

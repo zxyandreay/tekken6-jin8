@@ -62,3 +62,9 @@ A **standalone experimental PSP PRX** has now been written, compiled in PSPDEV/P
 ## Incident 001 status — v0.1 rejected
 
 User reported a **Bad Execution Address** crash and loss of replacement custom font textures. The v0.1 mapped PRX size **0x6A08** greatly exceeded the accepted ultrawide PRX footprint **0x0EB0** and employed global JIT/cache invalidation in runtime loops. v0.2 reduces mapped size to **0x1DD8**, uses local code-cache invalidation and includes an opt-in no-write `Jin8.safe` diagnostic. v0.2 is compiled only; it must **not** be marked accepted until device validates Jin behavior, ultrawide preservation, text replacement, and no crashes. See [incident report](../research/jin-lifecycle/incident-001-android-crash-fonts.md).
+
+## Incident 002 — v0.2 rejected; lightweight native CWCheat backend v0.3
+
+The user confirmed v0.2 reached the main menu and character selection but lost HD font/text replacements; on Jin fight entry it crashed with Bad Execution Address `PC=0x448DC65D`, `RA=0x08A53338`. The asynchronous source-cheat interpreter and mapped PRX size are plausible contributing risks, not proven exact root causes. A guarded v0.3 version of the large interpreter compiled but mapped `0x3354` bytes and was **rejected without distribution** due to the previously established texture-size risk.
+
+The recommended next test is now `plugin-lite/`: mapped PRX size `0x0434` bytes, marker only, full original master/runtime code installed with conditional `_C1` CWCheat gates processed by PPSSPP's native cheat scheduler. Original ultrawide PRX and manifest not modified. [Full incident and ABI details](../research/jin-lifecycle/incident-002-v02-crash-lite-v03.md). Device acceptance pending.

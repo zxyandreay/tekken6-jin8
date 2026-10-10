@@ -77,3 +77,7 @@ node tools/probes/verify-master-payload.mjs --endpoint 192.168.0.101:39100 --lab
 ## Experiment 005 checkpoint
 
 [Three watcher captures analyzed](experiment-005-results.md). P2 was attacking during nominal idle, so it is not a stationary control. Three custom links persist across 100/100 samples. A genuine source-matching **speed mode 3 / zoom 16.0 / camera rate 0.5** window appeared in the attack capture, despite the user not perceiving SlowMo. Next reduce P2 interference and test the read-only focused cinematic monitor.
+
+## Android incidents and automatic implementation
+
+v0.1 crashed and altered texture-font replacement selection; v0.2 reduced resident footprint but still crashed **at Jin fight start** while menu fonts remained wrong. See [Incident 001](incident-001-android-crash-fonts.md) and [Incident 002 + lite v0.3 pivot](incident-002-v02-crash-lite-v03.md). Follow-up is **testing the new implementation** rather than repeating the original source-cheat runtime probes.

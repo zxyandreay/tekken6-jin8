@@ -34,3 +34,7 @@ Upstream reference is read-only. Reproducing techniques in this repository does 
 ## Incident 001: mapped PRX allocation may alter texture hashes
 
 Ultrawide accepted footprint is one `PT_LOAD` with `p_filesz=p_memsz=0x0EB0`; its historical test changed *only* the resident mapped size to `0x12D0` and reproduced missing replacement font/texture selections. The separate Jin8 v0.1 had `p_memsz=0x6A08`; v0.2 trims this to `0x1DD8`, still larger than the proven-safe ultrawide footprint. Treat coexistence as *untested* until verified on-device. Do not edit ultrawide official release. See [Jin8 incident](../../research/jin-lifecycle/incident-001-android-crash-fonts.md).
+
+## v0.3 approach: keep ultrawide 100% untouched
+
+After v0.2 still crashed and lacked HD custom font textures, the Jin8 loader changed architectures. The new independent `Tekken6Jin8Gate.prx` maps only `0x0434` bytes versus rejected v0.2 `0x1DD8` and the accepted ultrawide `0x0EB0`. It writes only the high-RAM source-independent sentinel and hands data mutations to PPSSPP's existing CWCheat engine. The gate plugin requests its own `memory=80`. The user-specific generated game cheat INI includes the four original camera options, all OFF; using it can require **replacing or merging the shared PPSSPP cheat INI**, but not editing/replacing the official ultrawide PRX, manifest, source, or published release. Full runtime coexistence/font correctness is **not confirmed**. See [Incident 002](../../research/jin-lifecycle/incident-002-v02-crash-lite-v03.md).
